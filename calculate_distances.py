@@ -43,7 +43,9 @@ def random_filename(size=10, chars=ascii_letters+digits):
 
 def get_vdw_interaction_radii(vdw_filename=DATAPATH+'downloaded_data/vdw.txt'):
   """
-  :param vdw_filename: full path to a tab-delineated file with the columns:
+  :param vdw_filename: full path to a tab-delineated file with the columns: 
+                       [0] Atomic Number, [1] Element Symbol, [2] Atomic Radius, [3] Ionic Radius, 
+                       [4] Covalent Radius, [5] Van-der-Waals Radius, [6] Crystal Radius
   :return: dictionary of element -> van der Waals' interaction radii (or ionic radii, if the interaction
            radius is unavailable)
   """
@@ -161,14 +163,14 @@ def create_distlist_files(annotation_file, pdb_ids, receptor_pdb_dir, ligand_pdb
                           distlist_dir, annot_dir, include_backbone=False):
   """
   :param annotation_file: full path to a tab-delineated annotation file (as downloaded from BioLiP),
-                          e.g., DBPATH+'biolip/annotations/BioLiP_allfiles-2015-09-26.txt'
-  :param pdb_ids: subset of PDB IDs to create distlist files for
+                          e.g., DATAPATH+'processed_data/annotations/current_annotations.txt'
+  :param pdb_ids: subset of PDB IDs to create "_distances.txt.gz" files for
   :param receptor_pdb_dir: full path to a directory containing all receptor protein PDB structures
   :param ligand_pdb_dir: full path to a directory containing all ligand PDB structures (corresponding to proteins)
   :param distlist_dir: full path to a directory containing the processed "_distances.txt.gz" output files
   :param annot_dir: full path to a directory containing the processed "_annotation.txt.gz" output files
   :param include_backbone: boolean whether to include protein backbone->ligand proximities in calculations or not
-  :return: None, but create a "distlist" file in the appropriate directory corresponding to each of the PDB 
+  :return: None, but create a "_distances.txt.gz" file in the appropriate directory corresponding to each of the PDB 
            IDs specified, and update the annotation file accordingly.
   """
 
@@ -198,7 +200,7 @@ def create_distlist_files(annotation_file, pdb_ids, receptor_pdb_dir, ligand_pdb
         if not os.path.isdir(str(outerdir) + str(innerdir)):
           call(['mkdir', str(outerdir) + str(innerdir)])
 
-    # two output files: (1) an updated annotation file, and (2) a "distlist" file containing pairwise Euc distances
+    # two output files: (1) updated annotation file, (2) a "_distances.txt.gz" file with pairwise Euclidean distances
     new_annot_file = annot_dir + prefix + current_pdb_id + '_annotation.txt'
     distlist_file = distlist_dir + prefix + current_pdb_id + '_distances.txt.gz'
 
@@ -354,7 +356,7 @@ def create_distlist_files(annotation_file, pdb_ids, receptor_pdb_dir, ligand_pdb
                                                            current_euclidean_distance,
                                                            'N/A', 'N/A', 'N/A', 'N/A'])))
 
-              # to save harddrive space in the resulting files, only write out the full receptor sequence ONCE
+              # to save hard drive space in the resulting files, only write out the full receptor sequence ONCE
               if annot_pdb_id + pdb_chain not in receptor_sequences_output:
                 receptor_sequences_output.add(annot_pdb_id + pdb_chain)
                 distlist_outhandle.write('\t' + ''.join([positions[aa_index] if aa_index in positions else 'X'
@@ -415,7 +417,7 @@ def create_distlist_files(annotation_file, pdb_ids, receptor_pdb_dir, ligand_pdb
 
 def update_distlist_files(distlist_infiles):
   """
-  :param distlist_infiles: ordered list of full paths to "distlist" files to add extra info to:
+  :param distlist_infiles: ordered list of full paths to "_distances.txt.gz" files to add extra info to:
   :return: None, create a new tab-delineated file with the headings:
            [0] pdbID-pdbChain, 
            [1] residue number (1-indexed), 
