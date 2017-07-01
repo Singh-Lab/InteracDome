@@ -41,6 +41,31 @@ def random_filename(size=10, chars=ascii_letters+digits):
 
 ########################################################################################################
 
+def get_vdw_interaction_radii(vdw_filename=DATAPATH+'downloaded_data/vdw.txt'):
+  """
+  :param vdw_filename: full path to a tab-delineated file with the columns:
+  :return: dictionary of element -> van der Waals' interaction radii (or ionic radii, if the interaction
+           radius is unavailable)
+  """
+
+  vdw = {}  # element -> van der Waals interaction radii
+
+  vdw_inhandle = gzip.open(vdw_filename) if vdw_filename.endswith('gz') else open(vdw_filename)
+  for vdw_line in vdw_inhandle:
+    if vdw_line.startswith('#'):
+      continue
+    element = vdw_line.strip().split('\t')[1].upper()
+    ionic = vdw_line.strip().split('\t')[3] if len(vdw_line.strip().split('\t')) > 3 else ''
+    vandw = vdw_line.strip().split('\t')[5] if len(vdw_line.strip().split('\t')) > 5 else ''
+
+    vdw[element] = vandw if vandw != '' else (ionic if ionic != '' else '1.5')
+  vdw_inhandle.close()
+
+  return vdw
+
+
+########################################################################################################
+
 def get_euclidean_distance(pt_1, pt_2):
   """
   :param pt_1: n-length tuple corresponding to the first point
@@ -154,18 +179,7 @@ def create_distlist_files(annotation_file, pdb_ids, receptor_pdb_dir, ligand_pdb
              'SER': 'S', 'THR': 'T', 'TRP': 'W', 'TYR': 'Y', 'VAL': 'V'}
 
   # van der waals radii to calculate what's "close enough"
-  vdw = {'H': 1.09, 'D': 1.20, 'HE': 1.40, 'LI': 1.82, 'C': 1.70, 'N': 1.55, 'O': 1.52, 'F': 1.47, 'NE': 1.54,
-         'NA': 2.27, 'MG': 1.73, 'SI': 2.10, 'P': 1.80, 'S': 1.80, 'CL': 1.75, 'AR': 1.88, 'K': 2.75, 'NI': 1.63,
-         'CU': 1.40, 'ZN': 1.39, 'GA': 1.87, 'AS': 1.85, 'SE': 1.90, 'BR': 1.85, 'KR': 2.02, 'PD': 1.63, 'AG': 1.72,
-         'CD': 1.58, 'IN': 1.93, 'SN': 2.17, 'TE': 2.06, 'I': 1.98, 'XE': 2.16, 'PT': 1.75, 'AU': 1.66, 'HG': 1.55,
-         'TL': 1.96, 'PB': 2.02, 'U': 1.86}
-  for unknownvdw in {'BE', 'B', 'AL', 'CA', 'SC', 'TI', 'V', 'CR', 'MN', 'FE', 'CO', 'GE', 'RB', 'SR', 'Y', 'ZR',
-                     'NB', 'MO', 'TC', 'RU', 'RH', 'SB', 'CS', 'BA', 'LA', 'CE', 'PR', 'ND', 'PM', 'SM', 'EU',
-                     'GD', 'TB', 'DY', 'HO', 'ER', 'TM', 'YB', 'LU', 'HF', 'TA', 'W', 'RE', 'OS', 'BI', 'PO',
-                     'AT', 'RN', 'FR', 'RA', 'AC', 'TH', 'PA', 'IR', 'NP', 'PU', 'AM', 'CM', 'BK', 'CF', 'ES',
-                     'FM', 'MD', 'NO', 'LR', 'RF', 'DB', 'SG', 'BH', 'HS', 'MT', 'DS', 'RG', 'UUB', 'UUT',
-                     'UUQ', 'UUP', 'UUH', 'UUS', 'UUO'}:
-    vdw[unknownvdw] = 1.5
+  vdw = get_vdw_interaction_radii()
 
   # For each PDB ID that we are running on:
   pdb_id_index = 0  # keep track of our progress
@@ -418,17 +432,7 @@ def update_distlist_files(distlist_infiles):
   """
 
   # input all the van der Waals radii that we know about
-  vdw = {}  # element -> van der Waals interaction radii
-  vdw_inhandle = open(DATAPATH + 'downloaded_data/vdw.txt')
-  for vdw_line in vdw_inhandle:
-    if vdw_line.startswith('#'):
-      continue
-    element = vdw_line.strip().split('\t')[1].upper()
-    ionic = vdw_line.strip().split('\t')[3] if len(vdw_line.strip().split('\t')) > 3 else ''
-    vandw = vdw_line.strip().split('\t')[5] if len(vdw_line.strip().split('\t')) > 5 else ''
-
-    vdw[element] = vandw if vandw != '' else (ionic if ionic != '' else '1.5')
-  vdw_inhandle.close()
+  vdw = get_vdw_interaction_radii()
 
   # Keep track of all (distance, set of radii) that we calculated the integral and error for,
   # so that we don't redo it ! MEMORY INTENSIVE but less time intensive (hopefully)
