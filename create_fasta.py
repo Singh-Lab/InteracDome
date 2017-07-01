@@ -170,6 +170,7 @@ def create_biolip_fasta_files(distance_file, fasta_file, current_pdb_id, distanc
 ########################################################################################################
 
 if __name__ == "__main__":
+
   # Parse the command-line arguments
   parser = argparse.ArgumentParser(description='Process the receptor-ligand distance files to create FASTA ' +
                                                'files where each AA position is associated with a binding score ' +
