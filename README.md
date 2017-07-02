@@ -78,7 +78,7 @@ choose to run this domain-finding step independently, you must format the result
 formatting in the file below (to run subsequent steps of the pipeline).
 
 ```
-downloaded_data/domains/BioLiP_2017-06-28-domains-pfam_v31.tsv.gz
+processed_data/domains/BioLiP_2017-06-28-domains-pfam_v31.tsv.gz
 ```
 
 ### Assigning site-based domain binding potential scores
@@ -106,7 +106,7 @@ super groups using molecular information from the [Chemical Component Dictionary
  the following file (provided in this repository):
  
 ```
-processed_data/ligand_groups.txt
+downloaded_data/ligand_groups.txt
 ```
  
 To repeat these steps to generate an up-to-date version of the file, the following script can be run 
