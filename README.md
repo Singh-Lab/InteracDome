@@ -1,10 +1,9 @@
 # Generate Site-Based Domain Interaction Scores
-In this project, we use protein co-complex structures to inform how specific sites within domains may be involved 
-in binding different ligands. 
-
 <div align="center"><img src="interaction-domains-pipeline.png" alt="pipeline figure" title="pipeline to generate site-based domain interaction scores" width="50%" /></div>
 
-If you use data or scripts from this repository, please cite:
+In this project, we use information from protein co-complex structures to determine how individual positions 
+within domains may be involved in binding different ligands. If you use data or scripts from this repository, 
+please cite:
 
 > Kobren, S.N. and Singh, M. (2017) "Structure-informed approach to discovering perturbed interaction interfaces in cancer." *Manuscript in preparation.*
 
