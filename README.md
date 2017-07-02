@@ -78,7 +78,7 @@ choose to run this domain-finding step independently, you must format the result
 formatting in the file below (to run subsequent steps of the pipeline).
 
 ```
-processed_data/domains/BioLiP_2017-06-28-domains-pfam_v31.tsv.gz
+downloaded_data/domains/BioLiP_2017-06-28-domains-pfam_v31.tsv.gz
 ```
 
 ### Assigning site-based domain binding potential scores
