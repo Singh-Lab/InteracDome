@@ -2,7 +2,7 @@
 In this project, we use protein co-complex structures to inform how specific sites within domains may be involved 
 in binding different ligands. 
 
-<img src="interaction-domains-pipeline.png" alt="pipeline figure" title="pipeline to generate site-based domain interaction scores" align="middle" width="70%" />
+<div style="text-align:center;"><img src="interaction-domains-pipeline.png" alt="pipeline figure" title="pipeline to generate site-based domain interaction scores" width="50%" /></div>
 
 If you use data or scripts from this repository, please cite:
 
