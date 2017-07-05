@@ -76,12 +76,14 @@ In our paper, we downloaded all [Pfam-A (version 31)](http://pfam.xfam.org) doma
 locally to find domain hits. General code to run this step of the pipeline can be found at 
 <https://github.com/Singh-Lab/run-hmmer>.
 
-The output of these steps, run on BioLiP (version 2017-06-28) can be found in the following file. **Note:** If you 
-choose to run this domain-finding step independently, you must format the results to match the tab-delineated
-formatting in the file below (to run subsequent steps of the pipeline).
+The output of these steps, run on BioLiP (version 2017-06-28) can be obtained by running the following steps. 
+**Note:** If you choose to run this domain-finding step independently, you must format the results to 
+match the tab-delineated formatting in the file below (to run subsequent steps of the pipeline).
 
-```
-processed_data/domains/BioLiP_2017-06-28-domains-pfam_v31.tsv.gz
+```bash
+mkdir processed_data
+mkdir processed_data/domains
+wget http://compbio.cs.princeton.edu/BioLiP_2017-06-28-domains-pfam_v31.tsv.gz -O processed_data/domains/BioLiP_2017-06-28-domains-pfam_v31.tsv.gz
 ```
 
 ### 5: Assigning site-based domain binding potential scores
@@ -105,7 +107,7 @@ python generate_domain_scores.py --distance mindist
 
 ---
 
-*NOTE: The following scripts included in this repository run optional steps.*
+*NOTE: The following script runs an optional steps.*
 
 ### Grouping small molecule ligand types
 
@@ -124,13 +126,4 @@ To repeat these steps to generate an up-to-date version of the file, the followi
 
 ```bash
 python group_ligand_types.py
-```
-
-### Plotting domain-based scores
-
-To create violin plots depicting the per-position *mindist* domain-based scores (useful to gain intuition about 
-how domains are generally involved in binding particular ligands), run:
-
-```bash
-python plot_domain_scores.py --domain PF00096_zf-C2H2 --ligand ZN
 ```
