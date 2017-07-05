@@ -20,7 +20,7 @@ from evaluate_uniqueness import ligand_groups, translate_ligand, normalize_score
 # CONSTANTS
 ########################################################################################################
 
-DATAPATH = os.getcwd()  # path to where all data should be stored; this can be updated
+DATAPATH = os.getcwd()+'/'  # path to where all data should be stored; this can be updated
 
 DISTANCE_CUTOFF = 20.  # cutoff (in Angstroms) to consider values for the "mindist" score
 PROXIMITY_CUTOFF = 3.6  # cutoff (in Angstroms) to consider an atom-to-atom distance as "close"

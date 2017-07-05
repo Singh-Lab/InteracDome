@@ -22,9 +22,11 @@ from random import choice
 # CONSTANTS
 ########################################################################################################
 
-DATAPATH = os.getcwd()  '/home/snadimpa/datadb/biolip/downloaded_data/'
+DATAPATH = os.getcwd()+'/'  # path to where all data should be stored; this can be updated
 
-TANIMOTO_CUTOFF = 0.9  # SMILES strings at or above this cutoff are considered the same molecule
+# Minimum Tanimoto coefficient (calculated between two SMILES strings) to consider the underlying
+# molcules to be the same
+TANIMOTO_CUTOFF = 0.9
 
 
 ########################################################################################################

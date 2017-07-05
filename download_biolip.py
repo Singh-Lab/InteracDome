@@ -14,7 +14,7 @@ import sys
 import argparse
 from subprocess import call
 
-DATAPATH = os.getcwd()  # path to where all data should be stored; this can be updated
+DATAPATH = os.getcwd()+'/'  # path to where all data should be stored; this can be updated
 
 
 ########################################################################################################

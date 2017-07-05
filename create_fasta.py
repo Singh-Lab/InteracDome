@@ -19,7 +19,7 @@ from subprocess import call
 # CONSTANTS
 ########################################################################################################
 
-DATAPATH = os.getcwd()  # path to where all data should be stored; this can be updated
+DATAPATH = os.getcwd()+'/'  # path to where all data should be stored; this can be updated
 DISTANCE_CUTOFF = 20.  # maximum distance (in Angstroms) between a ligand and receptor atom to record
 
 
