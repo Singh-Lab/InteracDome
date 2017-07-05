@@ -10,7 +10,7 @@ please cite:
 ### 1: Downloading preliminary data
 
 * To download the *primary set* of BioLiP data, released March 6, 2013, run the following. **Note that this 
-step can take a long time and will require substantial hard drive space.**
+step can take a long time and will require substantial hard drive space (4.1GB).**
 
 ```bash
 python download_biolip.py --initialize
