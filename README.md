@@ -81,8 +81,8 @@ The output of these steps, run on BioLiP (version 2017-06-28) can be obtained by
 match the tab-delineated formatting in the file below (to run subsequent steps of the pipeline).
 
 ```bash
-mkdir processed_data
-mkdir processed_data/domains
+if [ ! -e processed_data ]; then mkdir processed_data; fi
+if [ ! -e processed_data/domains ]; then mkdir processed_data/domains; fi
 BIOLIP_DOMAINS="BioLiP_2017-06-28-domains-pfam_v31.tsv.gz"
 wget http://compbio.cs.princeton.edu/$BIOLIP_DOMAINS -O processed_data/domains/$BIOLIP_DOMAINS
 ```
