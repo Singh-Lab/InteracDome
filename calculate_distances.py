@@ -541,10 +541,9 @@ if __name__ == "__main__":
   parser.add_argument('--prefix', type=str,
                       help='Two letter prefix to subset of PDB IDs to process',
                       default='10')
-  parser.add_argument('--function', type=str,
-                      help='Step in the pipeline to run: e.g., create_distlist, update_distlist, create_fasta',
-                      default='create_distances',
-                      choices={'create_distances', 'update_distances'})
+  parser.add_argument('--update_overlap', dest='update_overlap', action='store_true',
+                      help='Add Gaussian distribution overlap estimates to existing Euclidean distances?')
+  parser.set_defaults(update_overlap=False)
 
   args = parser.parse_args()
 
@@ -571,7 +570,7 @@ if __name__ == "__main__":
     sys.exit(1)
 
   # ----------------------------------------------------------------------------------------------------
-  if args.function == 'create_distances':
+  if not args.update_overlap:
     """
     Calculate the distances between the receptor protein chains and their ligands to create files
     named "_distances.txt" in the biolip/distances/ directory
@@ -597,7 +596,7 @@ if __name__ == "__main__":
                           distance_out_directory, annotations_out_directory)
 
   # ----------------------------------------------------------------------------------------------------
-  elif args.function == 'update_distances':
+  else:
     """
     Use the previously calculated distances between the receptor protein chains and their ligands
     to create files with new distance metrics that require Gaussian overlap calculations
