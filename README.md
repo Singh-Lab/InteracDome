@@ -83,7 +83,8 @@ match the tab-delineated formatting in the file below (to run subsequent steps o
 ```bash
 mkdir processed_data
 mkdir processed_data/domains
-wget http://compbio.cs.princeton.edu/BioLiP_2017-06-28-domains-pfam_v31.tsv.gz -O processed_data/domains/BioLiP_2017-06-28-domains-pfam_v31.tsv.gz
+BIOLIP_DOMAINS="BioLiP_2017-06-28-domains-pfam_v31.tsv.gz"
+wget http://compbio.cs.princeton.edu/$BIOLIP_DOMAINS -O processed_data/domains/$BIOLIP_DOMAINS
 ```
 
 ### 5: Assigning site-based domain binding potential scores
@@ -107,7 +108,7 @@ python generate_domain_scores.py --distance mindist
 
 ---
 
-*NOTE: The following script runs an optional steps.*
+*NOTE: The following script runs an optional step.*
 
 ### Grouping small molecule ligand types
 
