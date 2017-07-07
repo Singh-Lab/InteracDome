@@ -52,7 +52,7 @@ def line_count_from_file(infile_name):
     return int(word_count.split()[0])
 
   decompress_file = Popen(('zcat', infile_name), stdout=PIPE)
-  word_count = check_output(['wc', '-'], stdin=decompress_file.stdout)
+  word_count = check_output(['wc', '-l'], stdin=decompress_file.stdout)
   decompress_file.wait()
   return int(word_count.split()[0])
 
