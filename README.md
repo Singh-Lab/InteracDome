@@ -13,6 +13,8 @@ please cite:
 step can take a long time and will require substantial hard drive space (4.1GB).**
 
 ```bash
+if [ ! -d processed_data ]; then mkdir processed_data; fi
+if [ ! -d processed_data/annotations ]; then mkdir processed_data/annotations; fi
 python download_biolip.py --initialize
 ```
 
@@ -28,6 +30,7 @@ python download_biolip.py
 * To calculate pairwise Euclidean distances between receptor residue atoms and ligand atoms, run: 
 
 ```bash
+if [ ! -d processed_data/distances ]; then mkdir processed_data/distances; fi
 python calculate_distances.py --prefix XX
 ```
 
@@ -50,6 +53,7 @@ We suggest using a simple and intuitive score (i.e., ''mindist'') to measure the
 * To calculate the distances between each receptor amino acid residue and all corresponding ligand types, run: 
 
 ```bash
+if [ ! -d processed_data/fasta ]; then mkdir processed_data/fasta; fi
 python create_fasta.py --distance mindist --prefix XX
 ```
 
@@ -66,7 +70,6 @@ locally to find domain hits. General code to run this step of the pipeline can b
 * The output of these steps, run on BioLiP (version 2017-06-28) can be obtained by running:
  
 ```bash
-if [ ! -d processed_data ]; then mkdir processed_data; fi
 if [ ! -d processed_data/domains ]; then mkdir processed_data/domains; fi
 BIOLIP_DOMAINS="BioLiP_2017-06-28-domains-pfam_v31.tsv.gz"
 wget http://compbio.cs.princeton.edu/$BIOLIP_DOMAINS -O processed_data/domains/$BIOLIP_DOMAINS
