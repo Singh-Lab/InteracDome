@@ -145,8 +145,8 @@ python calculate_distances.py --update_overlap --prefix XX
 * Then, generate alternate binding propensity scores by running:
 
 ```bash
-pnython create_fasta.py --distance <abbreviation> --prefix XX
-pydthon evaluate_uniqueness.py --create_alignments --distance <abbreviation>
+python create_fasta.py --distance <abbreviation> --prefix XX
+python evaluate_uniqueness.py --create_alignments --distance <abbreviation>
 python evaluate_uniqueness.py --distance <abbreviation>
-pytihon generate_domain_scores.py --distance <abbreviation>
+python generate_domain_scores.py --distance <abbreviation>
 ```
