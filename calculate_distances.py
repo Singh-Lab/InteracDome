@@ -21,7 +21,9 @@ from random import choice
 # CONSTANTS
 ########################################################################################################
 
-DATAPATH = os.getcwd()+'/'  # path to where all data should be stored; this can be updated
+# path to where this script is currently located (and to where all data should be stored) -- this can 
+# be updated
+DATAPATH = os.path.dirname(os.path.abspath(__file__))+'/'
 DISTANCE_CUTOFF = 20.  # maximum distance (in Angstroms) between a ligand and receptor atom to record
 
 

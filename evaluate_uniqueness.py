@@ -23,13 +23,15 @@ from difflib import SequenceMatcher
 # CONSTANTS
 ########################################################################################################
 
-DATAPATH = os.getcwd()+'/'  # path to where all data should be stored; this can be updated
+# path to where this script is currently located (and to where all data should be stored) -- this can
+# be updated
+DATAPATH = os.path.dirname(os.path.abspath(__file__))+'/'
 
 DISTANCE_CUTOFF = 20.  # cutoff (in Angstroms) to consider values for the "mindist" score
 PROXIMITY_CUTOFF = 3.6  # cutoff (in Angstroms) to consider an atom-to-atom distance as "close"
 
-# full path to a tab-delineated file with columns PDB ID-PDB Chain, Domain Name (unique), and
-#  comma-delineated list of (1-indexed domain match state : 0-indexed sequence position : amino acid value)
+# full path to a tab-delimited file with columns PDB ID-PDB Chain, Domain Name (unique), and
+#  comma-delimited list of (1-indexed domain match state : 0-indexed sequence position : amino acid value)
 DOMAINS = DATAPATH+'processed_data/domains/BioLiP_2017-06-28-domains-pfam_v31.tsv.gz'
 
 
@@ -52,7 +54,7 @@ def line_count_from_file(infile_name):
     return int(word_count.split()[0])
 
   decompress_file = Popen(('zcat', infile_name), stdout=PIPE)
-  word_count = check_output(['wc', '-l'], stdin=decompress_file.stdout)
+  word_count = check_output(['wc', '-'], stdin=decompress_file.stdout)
   decompress_file.wait()
   return int(word_count.split()[0])
 
@@ -61,7 +63,7 @@ def line_count_from_file(infile_name):
 
 def ligand_groups(ligand_group_file=DATAPATH+'downloaded_data/ligand_groups.txt'):
   """
-  :param ligand_group_file: full path to a tab-delineated file matching ligand super group identifiers
+  :param ligand_group_file: full path to a tab-delimited file matching ligand super group identifiers
                             to original mmCIF ligand identifiers
   :return: mapping from original ligand identifier -> list of all super groups it is part of
   """
@@ -164,8 +166,8 @@ def combine_match_states(match_state_vectors):
 
 def format_fasta_aln(matchstate_file, alignment_out):
   """
-  :param matchstate_file: full path to a tab-delineated file containing a complete sequence identifier
-                          and comma-delineated list of corresponding match states
+  :param matchstate_file: full path to a tab-delimited file containing a complete sequence identifier
+                          and comma-delimited list of corresponding match states
   :param alignment_out: full path to a file to write the properly-formatted FASTA alignment
   :return: the name of the alignment output file (as input) upon successful completion, None otherwise
   """
@@ -213,7 +215,7 @@ def format_fasta_aln(matchstate_file, alignment_out):
 
 def create_alignment_files(domain_file, fasta_dir, alignment_dir, distance='mindist'):
   """
-  :param domain_file: full path to a tab-delineated list of domain matches, with columns corresponding to 
+  :param domain_file: full path to a tab-delimited list of domain matches, with columns corresponding to
                       [0] PDB identifier, [1] domain name, [2] ','-separated list of match state:index:value
   :param fasta_dir: full path to a directory containing FASTA files, where the header of each FASTA
                               file has been updated with the amino acid position, ligand type, and binding score
@@ -379,21 +381,92 @@ def henikoff_column_score(column):
 
 ########################################################################################################
 
-def overall_alignment_score(alignment_file):
+def henikoff_alignment_score(seqid_to_sequence):
   """
-  :param alignment_file: full path to a FASTA-formatted multiple alignment file
+  :param seqid_to_sequence: dictionary of sequence ID -> full sequence (where all sequences are the 
+                            same length)
   :return: the raw (i.e., not yet normalized, doesn't necessarily sum to 1) uniqueness score for each
            sequence ID in the original alignment file
   """
 
-  # read in the full sequence for each sequence ID
-  seqid_to_sequence = {}  # sequence ID -> string of complete sequence
+  # remove the completely gapped columns (if any) from the score:
+  new_seqid_to_sequence = remove_gapped_columns(seqid_to_sequence)
+
+  # keep track of the per-column scores to generate overall per-sequence uniqueness scores
+  seq_ids = sorted(new_seqid_to_sequence.keys())  # identifiers must be in the same order in each column
+  sums_across_columns = [0.] * len(seq_ids)  # sum of per-column, per-sequence uniqueness scores
+
+  for col_ind in xrange(len(new_seqid_to_sequence[seq_ids[0]])):
+    current_column = [new_seqid_to_sequence[curr_seq_id][col_ind] for curr_seq_id in seq_ids]
+    column_scores = henikoff_column_score(current_column)
+
+    # update the running totals for each sequence's "uniqueness"
+    for seq_ind in xrange(len(seq_ids)):
+      sums_across_columns[seq_ind] += column_scores[seq_ind]
+
+  return seq_ids, sums_across_columns
+
+
+########################################################################################################
+
+def remove_gapped_columns(seqid_to_sequence):
+  """
+  :param seqid_to_sequence: dictionary of sequence ID -> full sequence (where all sequences are the 
+                            same length)
+  :return: a dictionary of sequence ID -> sequence (where all completely gapped columns have been
+           removed)
+  """
+
+  # check to see if there are any gapped columns
+  gapped_columns = [index for index in xrange(len(seqid_to_sequence.values()[0]))
+                    if set([sequence[index] for sequence in seqid_to_sequence.values()]) == {'-'}]
+
+  if len(gapped_columns) < 1:
+    return seqid_to_sequence
+
+  # if there are, create new sequences excluding the fully-gapped columns
+  seqid_to_ungapped_sequence = {sequence_id: [] for sequence_id in seqid_to_sequence.keys()}
+
+  for index in xrange(len(seqid_to_sequence.values()[0])):
+    if index in gapped_columns:
+      continue
+
+    for sequence_id, full_sequence in seqid_to_sequence.items():
+      seqid_to_ungapped_sequence[sequence_id].append(full_sequence[index])
+
+  # concatenate sequences and return
+  return {sequence_id: ''.join(ungapped_seq) for sequence_id, ungapped_seq in seqid_to_ungapped_sequence.items()}
+
+
+########################################################################################################
+
+def clear_crystal_duplicates(alignment_file):
+  """
+  :param alignment_file: full path to a fasta file with sequence ID (PDB ID, PDB chain, start index, end index)
+  :return: a single PDB structure can have multiple (identical) protein chains, even if they belong
+           to biological assemblies (there can be many different ones specified for the same structure).
+           For each domain--ligand pair, we only consider sets of unique (PDB ID [no chain], ligand type, sequence)
+           before evaluating uniqueness.
+  """
+
+  unique_domhits = {}
+  seqid_to_sequence = {}  # sequence ID (PDB ID, PDB Chain, start index, end index) -> string of complete sequence
   current_seq_id = ''  # keep track of the current sequence ID (while parsing the multiple alignment file)
 
   fasta_handle = gzip.open(alignment_file) if alignment_file.endswith('gz') else open(alignment_file)
   for aln_line in fasta_handle:
     if aln_line.startswith('>'):
       current_seq_id = aln_line[1:-1].split()[0]  # remove new line and starting '>'
+      pdb_id = current_seq_id[:4]
+      pdb_chain = current_seq_id[4]
+      dom_loc = current_seq_id[6:]
+
+      if pdb_id not in unique_domhits:
+        unique_domhits[pdb_id] = {}
+      if dom_loc not in unique_domhits[pdb_id]:
+        unique_domhits[pdb_id][dom_loc] = set()
+      unique_domhits[pdb_id][dom_loc].add(pdb_chain)
+
       seqid_to_sequence[current_seq_id] = []  # start to keep track of current sequence
     else:
       seqid_to_sequence[current_seq_id].append(aln_line.strip())  # sequence without newlines
@@ -402,22 +475,33 @@ def overall_alignment_score(alignment_file):
   for sequence_id in seqid_to_sequence.keys():
     seqid_to_sequence[sequence_id] = ''.join(seqid_to_sequence[sequence_id])
 
+  # go through the sequences to store unique domains from chains:
+  # pdbID -> (sequence, loc) -> [chains]  # identical chains will have had identical domain locations...
+  unique_seq_ids = []
+  for pdb_id in unique_domhits.keys():
+    for dom_loc, chains in unique_domhits[pdb_id].items():
+      unique_seq_ids.append(pdb_id + sorted(list(chains))[0] + '_' + dom_loc)
+
+  return {seq_id: seq for seq_id, seq in seqid_to_sequence.items() if seq_id in unique_seq_ids}, \
+         set([seq_id for seq_id in seqid_to_sequence.keys() if seq_id not in unique_seq_ids])
+
+
+########################################################################################################
+
+def overall_alignment_score(alignment_file):
+  """
+  :param alignment_file: full path to a FASTA-formatted multiple alignment file
+  :return: the raw (i.e., not yet normalized, doesn't necessarily sum to 1) uniqueness score for each
+           sequence ID in the original alignment file
+  """
+
+  # read in the full sequence for each sequence ID
+  seqid_to_sequence, missing_seqids = clear_crystal_duplicates(alignment_file)
+
   # make sure that the sequences in this alignment are all the same length
   assert len(set([len(seq) for seq in seqid_to_sequence.values()])) == 1, "Varying sequence lengths in "+alignment_file
 
-  # keep track of the per-column scores to generate overall per-sequence uniqueness scores
-  seq_ids = sorted(seqid_to_sequence.keys())  # identifiers must be in the same order in each column
-  sums_across_columns = [0] * len(seq_ids)  # sum of per-column, per-sequence uniqueness scores
-
-  for col_ind in xrange(len(seqid_to_sequence[seq_ids[0]])):
-    current_column = [seqid_to_sequence[curr_seq_id][col_ind] for curr_seq_id in seq_ids]
-    column_scores = henikoff_column_score(current_column)
-
-    # update the running totals for each sequence's "uniqueness"
-    for seq_ind in xrange(len(seq_ids)):
-      sums_across_columns[seq_ind] += column_scores[seq_ind]
-
-  return seq_ids, sums_across_columns
+  return henikoff_alignment_score(seqid_to_sequence)
 
 
 ########################################################################################################
@@ -430,7 +514,7 @@ def normalize_scores(scores):
 
   current_total = sum(map(float, scores))
 
-  return [float(current_value)/current_total for current_value in scores]
+  return [float(current_value)/max(current_total, 1.) for current_value in scores]
 
 
 ########################################################################################################
@@ -440,8 +524,8 @@ def generate_uniqueness_scores(domain_names, ligand_types, alignment_files, outp
   :param domain_names: list of domain names corresponding to each alignment file in alignment_files
   :param ligand_types: list of ligand binding types corresponding to each alignment file in alignment_files
   :param alignment_files: list of full paths to FASTA-formatted alignment files to calculate uniqueness scores for
-  :param output_file: full path to an output file to write tab-delineated results. Each column will correspond to:
-                      [0] domain name, [1] ligand binding type, [2] comma-delineated list of 
+  :param output_file: full path to an output file to write tab-delimited results. Each column will correspond to:
+                      [0] domain name, [1] ligand binding type, [2] comma-delimited list of
                       pdbID_domain-start_domain-end: relative uniqueness
   :return: None, but print a success message
   """

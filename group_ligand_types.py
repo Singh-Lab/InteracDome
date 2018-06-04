@@ -19,22 +19,20 @@ from random import choice
 
 
 ########################################################################################################
-# CONSTANTS
-########################################################################################################
 
-DATAPATH = os.getcwd()+'/'  # path to where all data should be stored; this can be updated
+# path to where this script is currently located (and to where all data should be stored) -- this can
+# be updated
+DATAPATH = os.path.dirname(os.path.abspath(__file__))+'/downloaded_data/'
 
-# Minimum Tanimoto coefficient (calculated between two SMILES strings) to consider the underlying
-# molcules to be the same
-TANIMOTO_CUTOFF = 0.9
+TANIMOTO_CUTOFF = 0.9  # SMILES strings at or above this cutoff are considered the same molecule
 
 
 ########################################################################################################
 # DOWNLOAD AND PARSE ORIGINAL INFORMATION
 ########################################################################################################
 
-def download_and_parse_ccd(ccd_path=DATAPATH+'downloaded_data/ccd/',
-                           outfile=DATAPATH+'downloaded_data/ccd/chemical_components_dictionary-parsed.tsv'):
+def download_and_parse_ccd(ccd_path=DATAPATH+'ccd/',
+                           outfile=DATAPATH+'ccd/chemical_components_dictionary-parsed.tsv'):
   """
   :param ccd_path: full path to directory where downloaded files and parsed file should be stored
   :param outfile: full path to a file to write output to
@@ -46,7 +44,7 @@ def download_and_parse_ccd(ccd_path=DATAPATH+'downloaded_data/ccd/',
   if not os.path.isdir(ccd_path):
     call(['mkdir', ccd_path])
 
-  components_file = ccd_path+'components.cif.gz'
+  components_file = ccd_path + 'components.cif.gz'
 
   if not os.path.isfile(components_file):
     call(['wget', 'ftp://ftp.wwpdb.org/pub/pdb/data/monomers/components.cif.gz', '-O', components_file])
@@ -126,7 +124,7 @@ def download_and_parse_ccd(ccd_path=DATAPATH+'downloaded_data/ccd/',
       mmcif_to_molecular_info[mmcif_id]['InChIkey'] = inchi_key_value
   components_handle.close()
 
-  # write all the parsed information to the specified tab-delineated file
+  # write all the parsed information to the specified tab-delimited file
   out_handle = gzip.open(outfile, 'w') if outfile.endswith('gz') else open(outfile, 'w')
   out_handle.write('\n'.join(['# All ligand information was downloaded from wwPDB\'s Chemical Components Dictionary:',
                               '# ftp://ftp.wwpdb.org/pub/pdb/data/monomers/components.cif.gz',
@@ -151,8 +149,8 @@ def download_and_parse_ccd(ccd_path=DATAPATH+'downloaded_data/ccd/',
 
 ########################################################################################################
 
-def download_and_parse_hmdb(hmdb_path=DATAPATH+'downloaded_data/hmdb/',
-                            outfile=DATAPATH+'downloaded_data/hmdb/human_metabolome_database-parsed.tsv'):
+def download_and_parse_hmdb(hmdb_path=DATAPATH+'hmdb/',
+                            outfile=DATAPATH+'hmdb/human_metabolome_database-parsed.tsv'):
   """
   :param hmdb_path: full path to directory where downloaded files and parsed file should be stored
   :param outfile: full path to a file to write output to
@@ -163,7 +161,7 @@ def download_and_parse_hmdb(hmdb_path=DATAPATH+'downloaded_data/hmdb/',
   if not os.path.isdir(hmdb_path):
     call(['mkdir', hmdb_path])
 
-  metabolites_file = hmdb_path+'hmdb_metabolites.zip'
+  metabolites_file = hmdb_path + 'hmdb_metabolites.zip'
 
   if not os.path.isfile(metabolites_file):
     call(['wget', 'http://www.hmdb.ca/system/downloads/current/hmdb_metabolites.zip', '-O', metabolites_file])
@@ -251,8 +249,8 @@ def download_and_parse_hmdb(hmdb_path=DATAPATH+'downloaded_data/hmdb/',
 
 ########################################################################################################
 
-def download_and_parse_drugbank(drugbank_path=DATAPATH+'downloaded_data/drugbank/',
-                                outfile=DATAPATH+'downloaded_data/drugbank/drugbank-parsed.tsv'):
+def download_and_parse_drugbank(drugbank_path=DATAPATH + 'drugbank/',
+                                outfile=DATAPATH + 'drugbank/drugbank-parsed.tsv'):
   """
   :param drugbank_path: full path to directory where downloaded files and parsed file should be stored
   :param outfile: full path to a file to write output to
@@ -263,7 +261,7 @@ def download_and_parse_drugbank(drugbank_path=DATAPATH+'downloaded_data/drugbank
   if not os.path.isdir(drugbank_path):
     call(['mkdir', drugbank_path])
 
-  drug_file = drugbank_path+'drugbank_all_full_database.xml'
+  drug_file = drugbank_path + 'drugbank_all_full_database.xml'
 
   if not os.path.isfile(drug_file):
     sys.stderr.write('Please download the most recent DrugBank file from https://www.drugbank.ca/releases/latest\n')
@@ -388,14 +386,14 @@ def random_filename(size=10, chars=ascii_letters + digits):
   :return: a random string of length size comprised of chars (lowercase ASCII letters and digits 0-9)
   """
 
-  return ''.join(choice(chars) for _ in xrange(size))
+  return ''.join(choice(chars) for _ in range(size))
 
 
 ########################################################################################################
 
 def process_alternate_ligands(alt_ligand_file, smiles_string_index, all_alt_smiles_file):
   """
-  :param alt_ligand_file: full path to a tab-delineated file where one of the column values is a 
+  :param alt_ligand_file: full path to a tab-delimited file where one of the column values is a
                                 molecular structure SMILES string
   :param smiles_string_index: the 0-indexed column of the SMILES string in alternate_ligand_file
   :param all_alt_smiles_file: full path to an intermediate file required by "babel" containing just SMILES strings
@@ -436,14 +434,14 @@ def process_alternate_ligands(alt_ligand_file, smiles_string_index, all_alt_smil
 ########################################################################################################
 
 def calculate_tanimoto(alt_ligand_file, smiles_string_index, all_alt_smiles_file, output_file,
-                       orig_ligand_file=DATAPATH+'downloaded_data/ccd/chemical_components_dictionary-parsed.tsv',
+                       orig_ligand_file=DATAPATH+'ccd/chemical_components_dictionary-parsed.tsv',
                        orig_ligand_smiles_index=6):
   """
-  :param alt_ligand_file: full path to a tab-delineated file where one of the column values is a 
+  :param alt_ligand_file: full path to a tab-delimited file where one of the column values is a
                                 molecular structure SMILES string
   :param smiles_string_index: the 0-indexed column of the SMILES string in alternate_ligand_file
   :param all_alt_smiles_file: full path to an intermediate file required by "babel" containing just SMILES strings
-  :param output_file: full path to the output file to write the tab-delineated Tanimoto comparison results
+  :param output_file: full path to the output file to write the tab-delimited Tanimoto comparison results
   :param orig_ligand_file: full path to a "ligand" file labeled by mmCIF ID
   :param orig_ligand_smiles_index: the 0-indexed column in orig_ligand_file corresponding to the canonical SMILES string
   :return: None, but print success message
@@ -488,7 +486,7 @@ def calculate_tanimoto(alt_ligand_file, smiles_string_index, all_alt_smiles_file
     if len(ligand_smiles) > 0:
 
       # print out a temporary file containing just this SMILES string
-      current_orig_smiles_file = DATAPATH+'downloaded_data/'+random_filename()+'.smi'
+      current_orig_smiles_file = '/tmp/' + random_filename() + '.smi'
       orig_smiles_handle = open(current_orig_smiles_file, 'w')
       orig_smiles_handle.write(ligand_smiles + '\n')
       orig_smiles_handle.close()
@@ -529,14 +527,14 @@ def calculate_tanimoto(alt_ligand_file, smiles_string_index, all_alt_smiles_file
 # FIND DRUG-LIKE, METABOLITE-LIKE, and ION-LIKE LIGANDS
 ########################################################################################################
 
-def check_inputs(tanimoto_file=DATAPATH+'downloaded_data/drugbank/drugbank_tanimoto.tsv.gz',
-                 parsed_file=DATAPATH+'downloaded_data/drugbank/drugbank-parsed.tsv',
+def check_inputs(tanimoto_file=DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz',
+                 parsed_file=DATAPATH+'drugbank/drugbank-parsed.tsv',
                  parse_function=download_and_parse_drugbank,
                  smiles_index=6):
   """
-  :param tanimoto_file: full path to a tab-delineated file containing the all-against-all pairwise Tanimoto
+  :param tanimoto_file: full path to a tab-delimited file containing the all-against-all pairwise Tanimoto
                         coefficients between SMILES strings
-  :param parsed_file: full path to a parsed tab-delineated file of all ligand information downloaded from an 
+  :param parsed_file: full path to a parsed tab-delimited file of all ligand information downloaded from an
                       online source (e.g., DrugBank, HMDB)
   :param parse_function: function to download and parse required raw data about alternate ligands
   :param smiles_index: 0-indexed column of the canonical SMILES string in the parsed_file
@@ -545,7 +543,7 @@ def check_inputs(tanimoto_file=DATAPATH+'downloaded_data/drugbank/drugbank_tanim
   """
 
   # parsed information about all ligands in wwPDB's Chemical Components Dictionary
-  original_ligand_file = DATAPATH+'downloaded_data/ccd/chemical_components_dictionary-parsed.tsv'
+  original_ligand_file = DATAPATH + 'ccd/chemical_components_dictionary-parsed.tsv'
   original_smiles_index = 6  # 0-indexed column of original_ligand_file corresponding to the canonical SMILES string
 
   # check the Tanimoto coefficient file:
@@ -570,10 +568,10 @@ def check_inputs(tanimoto_file=DATAPATH+'downloaded_data/drugbank/drugbank_tanim
 
 ########################################################################################################
 
-def similar_ligands(tanimoto_file=DATAPATH+'downloaded_data/drugbank/drugbank_tanimoto.tsv.gz',
+def similar_ligands(tanimoto_file=DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz',
                     restriction_group=None):
   """
-  :param tanimoto_file: full path to a tab-delineated file containing ligand IDs, their alternate IDs, 
+  :param tanimoto_file: full path to a tab-delimited file containing ligand IDs, their alternate IDs,
                         and their Tanimoto coefficients
   :param restriction_group: set of alternate ligand IDs to restrict results to
   :return: a set of original ligand IDs that passed the Tanimoto cutoff
@@ -619,16 +617,16 @@ def compare_ligands_to_alternate_molecules():
   # original ligand -> alternate ligand tanimoto coefficients should exist. Create them otherwise:
 
   # DrugBank information up-to-date?
-  drugbank_tanimoto_file = DATAPATH+'downloaded_data/drugbank/drugbank_tanimoto.tsv.gz'
-  drugbank_raw_data = DATAPATH+'downloaded_data/drugbank/drugbank-parsed.tsv'
+  drugbank_tanimoto_file = DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz'
+  drugbank_raw_data = DATAPATH + 'drugbank/drugbank-parsed.tsv'
   drugbank_smiles_index = 3
   check_inputs(drugbank_tanimoto_file, drugbank_raw_data, download_and_parse_drugbank, drugbank_smiles_index)
 
   drug_group = similar_ligands(drugbank_tanimoto_file)
 
   # HMDB information up-to-date?
-  hmdb_tanimoto_file = DATAPATH+'downloaded_data/hmdb/hmdb_tanimoto.tsv.gz'
-  hmdb_raw_data = DATAPATH+'downloaded_data/hmdb/human_metabolome_database-parsed.tsv'
+  hmdb_tanimoto_file = DATAPATH+'hmdb/hmdb_tanimoto.tsv.gz'
+  hmdb_raw_data = DATAPATH+'hmdb/human_metabolome_database-parsed.tsv'
   hmdb_smiles_index = 5
   check_inputs(hmdb_tanimoto_file, hmdb_raw_data, download_and_parse_hmdb, hmdb_smiles_index)
 
@@ -650,7 +648,7 @@ def compare_ligands_to_alternate_molecules():
   # Finally, extract the ions:
   ion_group = set()
 
-  ligand_raw_data = DATAPATH+'downloaded_data/ccd/chemical_components_dictionary-parsed.tsv'
+  ligand_raw_data = DATAPATH+'ccd/chemical_components_dictionary-parsed.tsv'
   ligand_handle = gzip.open(ligand_raw_data) if ligand_raw_data.endswith('gz') else open(ligand_raw_data)
   for ligand_line in ligand_handle:
 
@@ -668,9 +666,9 @@ def compare_ligands_to_alternate_molecules():
 
 ########################################################################################################
 
-def create_ligand_group_list(ligand_group_file=DATAPATH+'downloaded_data/ligand_groups.txt'):
+def create_ligand_group_list(ligand_group_file=DATAPATH+'ligand_groups.txt'):
   """
-  :return: None, but write to the output file a tab-delineated list of group names to mmCIF identifiers
+  :return: None, but write to the output file a tab-delimited list of group names to mmCIF identifiers
   """
 
   # get the sets of drugs, metabolites, and ions from the corresponding downloaded files
@@ -681,7 +679,7 @@ def create_ligand_group_list(ligand_group_file=DATAPATH+'downloaded_data/ligand_
                               '# The 8 nucleic acids entries ("NUCACID_") include: ' +
                               'NUCDNA, NUCDNAB, NUCRNA, NUCRNAB, A, U, C, G',
                               '# The 2 DNA entries ("DNA_") include: NUCDNA, NUCDNAB',
-                              '# The 6 RNA entries ("RNA_") include: NUCRNA, NUCRNAB, and nucleosides A, U, C, G',
+                              '# The 2 RNA entries ("RNA_") include: NUCRNA, NUCRNAB',
                               '# All '+str(len(ions))+' ion entries ("ION_") were extracted from wwPDB\'s Chemical ' +
                               'Component Dictionary (http://www.wwpdb.org/data/ccd),',
                               '# All '+str(len(drugs))+' drug entries ("DRUGLIKE_") were identified by comparing ' +
@@ -694,11 +692,11 @@ def create_ligand_group_list(ligand_group_file=DATAPATH+'downloaded_data/ligand_
                               '#  (http://www.hmdb.ca/system/downloads/current/hmdb_metabolites.zip)'])+'\n')
   out_handle.write('\t'.join(['#group_name', 'original_ligand_mmCIF_identifier'])+'\n')
 
-  for bligand in ['NUCDNA', 'NUCDNAB', 'NUCRNA', 'NUCRNAB', 'A', 'U', 'C', 'G']:
+  for bligand in ['NUCDNA', 'NUCDNAB', 'NUCRNA', 'NUCRNAB']:
     out_handle.write('NUCACID_' + '\t' + bligand + '\n')
   for bligand in ['NUCDNA', 'NUCDNAB']:
     out_handle.write('DNA_' + '\t' + bligand + '\n')
-  for bligand in ['NUCRNA', 'NUCRNAB', 'A', 'U', 'C', 'G']:
+  for bligand in ['NUCRNA', 'NUCRNAB']:
     out_handle.write('RNA_' + '\t' + bligand + '\n')
   for bligand in sorted(list(ions)):
     out_handle.write('ION_' + '\t' + bligand + '\n')
@@ -715,5 +713,5 @@ def create_ligand_group_list(ligand_group_file=DATAPATH+'downloaded_data/ligand_
 
 if __name__ == "__main__":
 
-  final_outfile = DATAPATH+'downloaded_data/ligand_groups.txt'
+  final_outfile = DATAPATH+'ligand_groups.txt'
   create_ligand_group_list(final_outfile)

@@ -20,13 +20,15 @@ from evaluate_uniqueness import ligand_groups, translate_ligand, normalize_score
 # CONSTANTS
 ########################################################################################################
 
-DATAPATH = os.getcwd()+'/'  # path to where all data should be stored; this can be updated
+# path to where this script is currently located (and to where all data should be stored) -- this can
+# be updated
+DATAPATH = os.path.dirname(os.path.abspath(__file__))+'/'
 
 DISTANCE_CUTOFF = 20.  # cutoff (in Angstroms) to consider values for the "mindist" score
 PROXIMITY_CUTOFF = 3.6  # cutoff (in Angstroms) to consider an atom-to-atom distance as "close"
 
-# full path to a tab-delineated file with columns PDB ID-PDB Chain, Domain Name (unique), and
-#  comma-delineated list of (1-indexed domain match state : 0-indexed sequence position : amino acid value)
+# full path to a tab-delimited file with columns PDB ID-PDB Chain, Domain Name (unique), and
+#  comma-delimited list of (1-indexed domain match state : 0-indexed sequence position : amino acid value)
 DOMAINS = DATAPATH+'processed_data/domains/BioLiP_2017-06-28-domains-pfam_v31.tsv.gz'
 
 
@@ -97,12 +99,35 @@ def weighted_fraction(distribution, max_cutoff=PROXIMITY_CUTOFF):
 
 
 ########################################################################################################
+
+def choose_summary_function(distance):
+  """
+  :param distance: string corresponding to the distance metric to be used
+  :return: a function that takes in a list of pair tuples with (value, relative weight) and returns a 
+           single score AND the name of the function
+  """
+
+  # set the default way by which to "flatten" per-position score distributions into a single positional score
+  if distance == 'mindist':
+    return weighted_fraction, 'weighted_fraction_within_'+str(PROXIMITY_CUTOFF)+'A'
+
+  elif distance in ['sumstd', 'sumvdw']:
+    # the "sum" values range from 0 -> infinity, so we store the median
+    return weighted_median, 'weighted_median'
+
+  else:
+    # the "mean", "max", and "fracin4" values range from 0->1, and, as the relative uniqueness scores sum to 1,
+    # taking the weighted sum makes sense (resulting positional score must also range from 0 to 1)
+    return weighted_sum, 'weighted_sum'
+
+
+########################################################################################################
 # PROCESS REQUIRED INPUT FILES
 ########################################################################################################
 
 def process_uniqueness_file(uniqueness_file):
   """
-  :param uniqueness_file: full path to a tab-delineated file with columns domain name, ligand type, and
+  :param uniqueness_file: full path to a tab-delimited file with columns domain name, ligand type, and
                           comma-separated list of sequence ID: relative uniqueness weight
   :return: dictionary of domain_name -> ligand_type -> pddID-pdbChain_start_end -> relative_uniqueness
   """
@@ -227,7 +252,7 @@ def process_alignment_file(align_file, uniqueness_weights, lig_binding_positions
 
 def create_binding_scores(uniqueness_file, fasta_dir, alignment_dir, binding_score_dir, distance):
   """
-  :param uniqueness_file: full path to a tab-delineated file with columns domain name, ligand type, and
+  :param uniqueness_file: full path to a tab-delimited file with columns domain name, ligand type, and
                           comma-separated list of sequence ID: relative uniqueness weight
   :param fasta_dir: full path to a directory containing per-PDB-ID sequences and their positional scores
   :param alignment_dir: full path to a directory containing precomputed (domain, ligand) FASTA alignments
@@ -237,20 +262,7 @@ def create_binding_scores(uniqueness_file, fasta_dir, alignment_dir, binding_sco
   """
 
   # set the default way by which to "flatten" per-position score distributions into a single positional score
-  if distance == 'mindist':
-    summarize_position_func = weighted_fraction
-    column_name = 'weighted_fraction_within_'+str(PROXIMITY_CUTOFF)+'A'
-
-  elif distance in ['sumstd', 'sumvdw']:
-    # the "sum" values range from 0 -> infinity, so we store the median
-    summarize_position_func = weighted_median
-    column_name = 'weighted_median'
-
-  else:
-    # the "mean", "max", and "fracin4" values range from 0->1, and, as the relative uniqueness scores sum to 1,
-    # taking the weighted sum makes sense (resulting positional score must also range from 0 to 1)
-    summarize_position_func = weighted_sum
-    column_name = 'weighted_sum'
+  summarize_position_func, column_name = choose_summary_function(distance)
 
   # all domain--ligand pairs to process are found in the uniqueness file:
   # domain -> ligand type -> pdbID_start_end -> relative_uniqueness
@@ -355,18 +367,17 @@ if __name__ == "__main__":
 
   if not os.path.isfile(uniqueness_scores_file):
     sys.stderr.write('Could not read uniqueness scores from '+uniqueness_scores_file+'\'n')
-    sys.stderr.write('Please run python '+os.getcwd()+'/evaluate_uniqueness.py --distance '+args.distance+'\n')
+    sys.stderr.write('Please run python evaluate_uniqueness.py --distance '+args.distance+'\n')
     sys.exit(1)
 
   if not os.path.isdir(fasta_file_directory):
     sys.stderr.write('Could not find FASTA files in '+fasta_file_directory+'\n')
-    sys.stderr.write('Please run python '+os.getcwd()+'/create_fasta.py --distance '+args.distance+'\n')
+    sys.stderr.write('Please run python create_fasta.py --distance '+args.distance+'\n')
     sys.exit(1)
 
   if not os.path.isdir(alignments_directory):
     sys.stderr.write('Could not read per-domain alignments from '+alignments_directory+'\n')
-    sys.stderr.write('Please run python '+os.getcwd()+'/evaluate_uniqueness.py --create_alignments ' +
-                     '--distance '+args.distance+'\n')
+    sys.stderr.write('Please run python evaluate_uniqueness.py --create_alignments --distance '+args.distance+'\n')
     sys.exit(1)
 
   # Create the new binding scores output directory if needed
