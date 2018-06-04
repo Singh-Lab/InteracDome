@@ -88,6 +88,7 @@ and then assign per-sequence scores as in
 * To get per-domain-instance uniqueness weights, run:
 
 ```bash
+if [ ! -d processed_data/domains/alignments ]; then mkdir processed_data/domains/alignments; fi
 python evaluate_uniqueness.py --create_alignments --distance mindist
 python evaluate_uniqueness.py --distance mindist
 ```
@@ -95,6 +96,7 @@ python evaluate_uniqueness.py --distance mindist
 * Finally, we use the per-domain sequence uniqueness evaluations generated in the previous step to assign per-domain-position binding propensities, for each ligand type:
 
 ```bash
+if [ ! -d processed_data/domains/binding_scores ]; then mkdir processed_data/domains/binding_scores; fi
 python generate_domain_scores.py --distance mindist
 ```
 
