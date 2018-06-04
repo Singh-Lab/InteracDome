@@ -1,7 +1,7 @@
 # Grouping of all relevant ligands found in the BioLiP database as of June 28, 2017
-# The 8 nucleic acids entries ("NUCACID_") include: NUCDNA, NUCDNAB, NUCRNA, NUCRNAB, A, U, C, G
+# The 4 nucleic acids entries ("NUCACID_") include: NUCDNA, NUCDNAB, NUCRNA, NUCRNAB
 # The 2 DNA entries ("DNA_") include: NUCDNA, NUCDNAB
-# The 6 RNA entries ("RNA_") include: NUCRNA, NUCRNAB, and nucleosides A, U, C, G
+# The 2 RNA entries ("RNA_") include: NUCRNA, NUCRNAB
 # All 204 ion entries ("ION_") were extracted from wwPDB's Chemical Component Dictionary (http://www.wwpdb.org/data/ccd),
 #  accessed August 9, 2016
 # All 8307 drug entries ("DRUGLIKE_") were identified by comparing ligand SMILES strings (Tanimoto coefficient > 0.9) 
@@ -14,18 +14,10 @@ NUCACID_	NUCDNA
 NUCACID_	NUCDNAB
 NUCACID_	NUCRNA
 NUCACID_	NUCRNAB
-NUCACID_	A
-NUCACID_	U
-NUCACID_	C
-NUCACID_	G
 DNA_	NUCDNA
 DNA_	NUCDNAB
 RNA_	NUCRNA
 RNA_	NUCRNAB
-RNA_	A
-RNA_	U
-RNA_	C
-RNA_	G
 ION_	118
 ION_	119
 ION_	1AL

@@ -45,9 +45,9 @@ ls downloaded_data/receptor/ -1 | cut -c1-2 | sort -u
 ### 3: Computing ligand-proximity scores for each protein position
 
 
-We suggest using a simple and intuitive score (i.e., ''mindist'') to measure per-site protein--ligand distances. 
+We suggest using a simple and intuitive score (i.e., ''mindist'') to measure the distances between protein side chains and bound ligands. 
 
-* To calculate the distances between each protein receptor chain amino acid residue and all corresponding ligand types, run: 
+* To calculate the distances between each receptor amino acid residue and all corresponding ligand types, run: 
 
 ```bash
 python create_fasta.py --distance mindist --prefix XX
