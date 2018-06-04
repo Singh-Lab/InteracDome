@@ -1,11 +1,11 @@
-# Generate Site-Based Domain Interaction Scores
-<div align="center"><img src="interaction-domains-pipeline.png" alt="pipeline figure" title="pipeline to generate site-based domain interaction scores" width="50%" /></div>
+# Compute Site-Based Ligand-Binding Propensities across the InteracDome 
+<div align="center"><img src="interaction-domains-pipeline.png" alt="pipeline figure" title="pipeline to generate site-based domain interaction scores" width="50%" /></div><br />
 
 In this project, we use information from protein co-complex structures to determine how individual positions 
 within domains may be involved in binding different ligands. If you use data or scripts from this repository, 
 please cite:
 
-> Kobren, S.N. and Singh, M. (2018) "Data-driven discovery of the InteracDome." *Manuscript in preparation.* [Website](https://interacdome.princeton.edu "InteracDome")
+> Kobren, S.N. and Singh, M. (2018) "Data-driven discovery of the InteracDome." *Manuscript in preparation.* [InteracDome Web Server](https://interacdome.princeton.edu "InteracDome")
 
 ### 1: Downloading preliminary data
 
@@ -133,7 +133,6 @@ in the protein receptor chain, paired with a heavy atom from the ligand.
 | *meanstd* | average " &sigma;=1.5 | as above, but the **average** (across all heavy side-chain receptor residue atoms) total overlap area  | 
 | *maxvdw* | maximum " &sigma;=vdw radii | the maximum total overlap area (as in *maxstd*) but where the standard deviations of each Gaussian distribution in a receptor-ligand atom pair are set to the van der Waals interaction radii of the respective atoms (rather than a uniform 1.5).
 | *meanvdw* | average " &sigma;=vdw radii | as above, but the **average** total overlap area |
-|
 
 To use the *maxstd*, *meanstd*, *maxvdw*, or *meanvdw* binding propensity calculations, you **must** first compute the overlap area between two partially overlapping Gaussian distances. 
 
