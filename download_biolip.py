@@ -74,6 +74,7 @@ def update_biolip_data():
         call(['rm', DATAPATH + 'downloaded_data/' + tarball_type + '_' + date + '.tar.bz2'])
 
   sys.stderr.write('All BioLiP data through ' + weekly_updates[0] + ' has been downloaded!\n')
+
   return weekly_updates + ['2013-03-6']  # include the base annotation date
 
 
@@ -131,6 +132,14 @@ if __name__ == "__main__":
       if not os.path.isdir(subdirectory):
         call(['mkdir', subdirectory])
 
+    current_annotations = [DATAPATH+'downloaded_data/annotations/BioLiP_'+update+'.txt' for update in release_dates if os.path.isfile(DATAPATH+'downloaded_data/annotations/BioLiP_'+update+'.txt')]
+    failed_annotations = [DATAPATH+'downloaded_data/annotations/BioLiP_'+update+'.txt' for update in release_dates if not os.path.isfile(DATAPATH+'downloaded_data/annotations/BioLiP_'+update+'.txt')]
+
     concatenated_annotation_file = DATAPATH+'processed_data/annotations/current_annotations.txt'
-    call(['cat'] + [DATAPATH+'downloaded_data/annotations/BioLiP_'+update+'.txt' for update in release_dates] +
-         ['>', concatenated_annotation_file])
+    file_handle = open(concatenated_annotation_file, 'w')
+    call(['cat'] + current_annotations, stdout=file_handle)
+    file_handle.close()
+
+    if len(failed_annotations) > 0:
+      sys.stderr.write('Failed to download the following annotation files:\n' + 
+                       '\n'.join(failed_annotations)+'\n')
