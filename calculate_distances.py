@@ -555,7 +555,7 @@ if __name__ == "__main__":
 
   if not os.path.isfile(current_annotation_file):
     sys.stderr.write('Could not open '+current_annotation_file+'\n')
-    sys.stderr.write('Please run python '+os.getcwd()+'/download_biolip.py\n')
+    sys.stderr.write('Please run: python download_biolip.py\n')
     sys.exit(1)
 
   # find the subset of PDB IDs to run on:
@@ -575,13 +575,13 @@ if __name__ == "__main__":
   if not args.update_overlap:
     """
     Calculate the distances between the receptor protein chains and their ligands to create files
-    named "_distances.txt" in the biolip/distances/ directory
+    named "_distances.txt" in the processed_data/distances/ directory
     """
 
-    receptor_directory = DATAPATH + 'biolip/downloaded_data/receptor/'
-    ligand_directory = DATAPATH + 'biolip/downloaded_data/ligand/'
-    distance_out_directory = DATAPATH + 'biolip/processed_data/distances/'
-    annotations_out_directory = DATAPATH + 'biolip/processed_data/annotations/'
+    receptor_directory = DATAPATH + 'downloaded_data/receptor/'
+    ligand_directory = DATAPATH + 'downloaded_data/ligand/'
+    distance_out_directory = DATAPATH + 'processed_data/distances/'
+    annotations_out_directory = DATAPATH + 'processed_data/annotations/'
 
     # create the directories we need (if we need them)
     for maindir in [distance_out_directory, annotations_out_directory]:
@@ -604,7 +604,7 @@ if __name__ == "__main__":
     to create files with new distance metrics that require Gaussian overlap calculations
     """
 
-    distance_out_directory = DATAPATH + 'biolip/processed_data/distances/' + args.prefix[0] + '/' + args.prefix + '/'
+    distance_out_directory = DATAPATH + 'processed_data/distances/' + args.prefix[0] + '/' + args.prefix + '/'
     if not os.path.isdir(distance_out_directory):
       sys.stderr.write('No such directory: ' + distance_out_directory + '\n')
       sys.exit(1)
