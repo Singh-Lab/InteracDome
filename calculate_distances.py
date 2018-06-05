@@ -370,7 +370,7 @@ def create_distlist_files(annotation_file, pdb_ids, receptor_pdb_dir, ligand_pdb
                 distlist_outhandle.write('\t\n')
 
             # call this receptor_aa_position a binding residue IFF the distance is close enough
-            if current_euclidean_distance <= 2 + vdw.get(ligand_atom_value, 1.5) + vdw.get(ratom_value, 1.5):
+            if current_euclidean_distance <= 2 + float(vdw.get(ligand_atom_value, 1.5)) + float(vdw.get(ratom_value, 1.5)):
               new_binding_residues[ligand_sub_type].add(receptor_aa_position)
 
       ligand_handle.close()
