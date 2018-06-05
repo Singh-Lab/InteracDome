@@ -19,7 +19,7 @@ python download_biolip.py --initialize
 ```
 
 
-* To update the BioLiP data that you just downloaded (as BioLiP releases weekly updates), run:
+* You **must** update the BioLiP data that you just downloaded (as BioLiP releases weekly updates) by running:
 
 ```bash
 python download_biolip.py
