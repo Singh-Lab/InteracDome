@@ -55,7 +55,7 @@ def update_biolip_data():
   weekly_updates_handle = open(weekly_updates_filename)
   for html_line in weekly_updates_handle:
     # check if the date is contained on this line
-    if html_line.startswith('<tr><td>') and html_line.endswith('</td>') and len(html_line.strip()) == 23:
+    if html_line.startswith('<tr><td>') and html_line.strip().endswith('</td>') and len(html_line.strip()) in [22, 23]:
       weekly_updates.append(html_line.strip().replace('<tr><td>', '').replace('</td>', ''))
   weekly_updates_handle.close()
   call(['rm', weekly_updates_filename])
