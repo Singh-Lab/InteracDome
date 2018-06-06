@@ -258,11 +258,17 @@ def create_distlist_files(annotation_file, pdb_ids, receptor_pdb_dir, ligand_pdb
       ligand_structure_file = ligand_pdb_dir+annot_pdb_id+'_'+ligand_id+'_'+ligand_chain+'_'+ligand_serial_number+'.pdb'
 
       if not os.path.isfile(receptor_structure_file):
-        sys.stderr.write('Could not open ' + receptor_structure_file + '\n')
-        continue
+        if os.path.isfile(receptor_structure_file+'.gz'):
+          call(['gzip', '-d', receptor_structure_file+'.gz'])
+        if not os.path.isfile(receptor_structure_file):
+          sys.stderr.write('Could not open ' + receptor_structure_file + '\n')
+          continue
       if not os.path.isfile(ligand_structure_file):
-        sys.stderr.write('Could not open ' + ligand_structure_file + '\n')
-        continue
+        if os.path.isfile(ligand_structure_file+'.gz'):
+          call(['gzip', '-d', ligand_structure_file+'.gz'])
+        if not os.path.isfile(ligand_structure_file):
+          sys.stderr.write('Could not open ' + ligand_structure_file + '\n')
+          continue
 
       # --------------------------------------------------------------------------------
       # PROCESS RECEPTOR FILE
