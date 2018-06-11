@@ -267,10 +267,13 @@ def create_alignment_files(domain_file, fasta_dir, alignment_dir, distance='mind
     # location of the current FASTA file
     current_fasta_file = fasta_dir+pdb_id_chain[0]+'/'+pdb_id_chain[:2]+'/' + pdb_id_chain[:4]+'_'+distance+'.fa'
     if not os.path.isfile(current_fasta_file):
-      continue
+      current_fasta_file = current_fasta_file+'.gz'
+      if not os.path.isfile(current_fasta_file):
+        sys.stderr.write('Could not open '+current_fasta_file+'\n')
+        continue
 
     # find the header that corresponds to our sequence of interest
-    fasta_handle = open(current_fasta_file)
+    fasta_handle = gzip.open(current_fasta_file) if current_fasta_file.endswith('gz') else open(current_fasta_file)
     for fasta_line in fasta_handle:
       if fasta_line.startswith('>' + pdb_id_chain):
         binding_positions = [entry.split('-') for entry in
