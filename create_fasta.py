@@ -279,7 +279,7 @@ if __name__ == "__main__":
 
   for infile in distlist_files:
     distance_infile = distance_out_directory + infile
-    fasta_outfile = fasta_out_directory+infile.replace('_distances.txt', '_'+args.distance+'.fa')
+    fasta_outfile = fasta_out_directory+infile.replace('_distances.txt.gz', '_'+args.distance+'.fa')
     create_biolip_fasta_files(distance_infile, fasta_outfile, infile[27:31], args.distance)
 
   sys.stderr.write('Successfully wrote '+"{:,}".format(len(distlist_files))+' '+args.distance+' fasta files to ' +
