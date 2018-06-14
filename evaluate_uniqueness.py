@@ -224,16 +224,6 @@ def create_alignment_files(domain_file, fasta_dir, alignment_dir, distance='mind
   :return: list of domain names, ligand types, and corresponding paths to alignment files
   """
 
-  # confirm that the directories we are interested in exist
-  for current_dir in [fasta_dir, alignment_dir]:
-    if not os.path.isdir(alignment_dir):
-      sys.stderr.write('Could not find directory ' + str(current_dir) + '\n')
-      sys.exit(1)
-
-  # create the output directory if need be
-  if not os.path.isdir(alignment_dir + distance):
-    call(['mkdir', alignment_dir + distance])
-
   ligand_to_group = ligand_groups()  # mapping of ligand ID -> super group
 
   # Process each domain separately:
@@ -603,7 +593,17 @@ if __name__ == "__main__":
     downweight redundant sequences that are prevalent in structural data.
     """
 
+    if not os.path.isdir(DATAPATH+'processed_data/fasta'):
+      sys.stderr.write('Could not find directory: '+DATAPATH+'processed_data/fasta/\n' + 
+                       'Please run: python create_fasta.py --distance '+args.distance+'\n')
+      sys.exit(1)
+
     sys.stderr.write('Creating per-domain, per ligand type, multiple sequence alignments.\n')
+
+    # check input directory existence:
+    for subdir in ['', 'domains', 'domains/alignments', 'domains/alignments/'+args.distance]:
+      if not os.path.isdir(DATAPATH+'processed_data/'+subdir):
+        call(['mkdir', DATAPATH+'processed_data/'+subdir])
 
     create_alignment_files(DOMAINS,
                            DATAPATH+'processed_data/fasta/',
@@ -621,7 +621,7 @@ if __name__ == "__main__":
     for subdir in ['', 'domains', 'domains/alignments', 'domains/alignments/'+args.distance]:
       if not os.path.isdir(DATAPATH+'processed_data/'+subdir):
         sys.stderr.write('ERROR, no such directory: '+DATAPATH+'processed_data/'+subdir+'\n')
-        sys.stderr.write('Please run python '+os.getcwd()+'/evaluate_uniqueness.py --create_alignments --' +
+        sys.stderr.write('Please run python '+os.getcwd()+'/evaluate_uniqueness.py --create_alignments --distance ' +
                          args.distance+'\n')
         sys.exit(1)
 

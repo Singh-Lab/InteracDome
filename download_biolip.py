@@ -39,6 +39,9 @@ def download_initial_biolip_data():
     sys.stderr.write('Expanding ' + basedata + '\n')
     call(['tar', '-jxvf', basedata, '-C', '/'.join(basedata.split('/')[:-1]) + '/'])
 
+  # return the date that we have:
+  return ['2013-03-6']
+
 
 ########################################################################################################
 
@@ -101,12 +104,14 @@ if __name__ == "__main__":
     for subdirectory in [DATAPATH+'downloaded_data',
                          DATAPATH+'downloaded_data/annotations',
                          DATAPATH+'downloaded_data/ligand',
-                         DATAPATH+'downloaded_data/receptor']:
+                         DATAPATH+'downloaded_data/receptor',
+                         DATAPATH+'processed_data',
+                         DATAPATH+'processed_data/annotations']:
       if not os.path.isdir(subdirectory):
         call(['mkdir', subdirectory])
 
     # Check to see if starting tar.bz2 files already exist; download and expand otherwise
-    download_initial_biolip_data()
+    release_dates = download_initial_biolip_data()
 
   # ----------------------------------------------------------------------------------------------------
   # Otherwise, download the list of updates to BioLiP and download those updates
@@ -117,7 +122,9 @@ if __name__ == "__main__":
     for subdirectory in [DATAPATH+'downloaded_data',
                          DATAPATH+'downloaded_data/annotations',
                          DATAPATH+'downloaded_data/ligand',
-                         DATAPATH+'downloaded_data/receptor']:
+                         DATAPATH+'downloaded_data/receptor',
+                         DATAPATH+'processed_data',
+                         DATAPATH+'processed_data/annotations']:
       if not os.path.isdir(subdirectory):
         sys.stderr.write('No such directory: '+subdirectory+'\n')
         sys.stderr.write('Please run python '+sys.argv[0]+' --initialize\n')
@@ -126,20 +133,20 @@ if __name__ == "__main__":
     # Get the list of all weekly updates (this does not include the base data) and download corresponding files
     release_dates = update_biolip_data()
 
-    # Create a current concatenated list of *all* annotations
-    for subdirectory in [DATAPATH+'processed_data',
-                         DATAPATH+'processed_data/annotations']:
-      if not os.path.isdir(subdirectory):
-        call(['mkdir', subdirectory])
+  # ----------------------------------------------------------------------------------------------------
+  # No matter what, create a current concatenated list of *all* annotations
+  current_annotations = [DATAPATH+'downloaded_data/annotations/BioLiP_'+update+'.txt' 
+                         for update in release_dates 
+                         if os.path.isfile(DATAPATH+'downloaded_data/annotations/BioLiP_'+update+'.txt')]
+  failed_annotations = [DATAPATH+'downloaded_data/annotations/BioLiP_'+update+'.txt' 
+                        for update in release_dates 
+                        if not os.path.isfile(DATAPATH+'downloaded_data/annotations/BioLiP_'+update+'.txt')]
 
-    current_annotations = [DATAPATH+'downloaded_data/annotations/BioLiP_'+update+'.txt' for update in release_dates if os.path.isfile(DATAPATH+'downloaded_data/annotations/BioLiP_'+update+'.txt')]
-    failed_annotations = [DATAPATH+'downloaded_data/annotations/BioLiP_'+update+'.txt' for update in release_dates if not os.path.isfile(DATAPATH+'downloaded_data/annotations/BioLiP_'+update+'.txt')]
+  concatenated_annotation_file = DATAPATH+'processed_data/annotations/current_annotations.txt'
+  file_handle = open(concatenated_annotation_file, 'w')
+  call(['cat'] + current_annotations, stdout=file_handle)
+  file_handle.close()
 
-    concatenated_annotation_file = DATAPATH+'processed_data/annotations/current_annotations.txt'
-    file_handle = open(concatenated_annotation_file, 'w')
-    call(['cat'] + current_annotations, stdout=file_handle)
-    file_handle.close()
-
-    if len(failed_annotations) > 0:
-      sys.stderr.write('Failed to download the following annotation files:\n' + 
-                       '\n'.join(failed_annotations)+'\n')
+  if len(failed_annotations) > 0:
+    sys.stderr.write('Failed to update results from the following BioLiP releases:\n' + 
+                     '\n'.join(failed_annotations)+'\n')

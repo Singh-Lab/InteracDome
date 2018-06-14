@@ -382,7 +382,6 @@ if __name__ == "__main__":
 
   # Create the new binding scores output directory if needed
   output_directory = DATAPATH+'processed_data/domains/binding_scores/'
-
   for subdir in ['', args.distance]:
     if not os.path.isdir(output_directory+subdir):
       call(['mkdir', output_directory+subdir])

@@ -581,7 +581,7 @@ if __name__ == "__main__":
   if not args.update_overlap:
     """
     Calculate the distances between the receptor protein chains and their ligands to create files
-    named "_distances.txt" in the processed_data/distances/ directory
+    named "_distances.txt.gz" in the processed_data/distances/ directory
     """
 
     receptor_directory = DATAPATH + 'downloaded_data/receptor/'

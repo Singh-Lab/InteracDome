@@ -13,8 +13,6 @@ please cite:
 step can take a long time and will require substantial hard drive space (4.1GB).**
 
 ```bash
-if [ ! -d processed_data ]; then mkdir processed_data; fi
-if [ ! -d processed_data/annotations ]; then mkdir processed_data/annotations; fi
 python download_biolip.py --initialize
 ```
 
@@ -30,7 +28,6 @@ python download_biolip.py
 * To calculate pairwise Euclidean distances between receptor residue atoms and ligand atoms, run: 
 
 ```bash
-if [ ! -d processed_data/distances ]; then mkdir processed_data/distances; fi
 python calculate_distances.py --prefix XX
 ```
 
@@ -53,7 +50,6 @@ We suggest using a simple and intuitive score (i.e., ''mindist'') to measure the
 * To calculate the distances between each receptor amino acid residue and all corresponding ligand types, run: 
 
 ```bash
-if [ ! -d processed_data/fasta ]; then mkdir processed_data/fasta; fi
 python create_fasta.py --distance mindist --prefix XX
 ```
 
@@ -72,7 +68,7 @@ locally to find domain hits. General code to run this step of the pipeline can b
 ```bash
 if [ ! -d processed_data/domains ]; then mkdir processed_data/domains; fi
 BIOLIP_DOMAINS="BioLiP_2017-06-28-domains-pfam_v31.tsv.gz"
-wget http://compbio.cs.princeton.edu/$BIOLIP_DOMAINS -O processed_data/domains/$BIOLIP_DOMAINS
+wget http://compbio.cs.princeton.edu/interacdome/$BIOLIP_DOMAINS -O processed_data/domains/$BIOLIP_DOMAINS
 ```
 
 *NOTE: If you choose to run this domain-finding step independently, you must format the results to 
@@ -96,8 +92,25 @@ python evaluate_uniqueness.py --distance mindist
 * Finally, we use the per-domain sequence uniqueness evaluations generated in the previous step to assign per-domain-position binding propensities, for each ligand type:
 
 ```bash
-if [ ! -d processed_data/domains/binding_scores ]; then mkdir processed_data/domains/binding_scores; fi
 python generate_domain_scores.py --distance mindist
+```
+
+### 6: Cross-validating the precision of binding propensities
+
+Next, we compute the 10-fold cross-validated precision at different binding propensity thresholds for each domain-ligand pair. 
+
+* To get the cross-validated precision achieved at each binding propensity, run:
+
+```bash
+python cross_validate_scores.py --start X --end X
+```
+
+*NOTE: This step may take a long time.* You have the option of specifying a subset of domains to run on. The minimum allowed start index is 0, and the maximum end value is the total number of domains for which there are binding propensities. 
+
+* To find the total number of domains to iterate over, run:
+
+```bash
+ls processed_data/domains/binding_scores/mindist | wc -l
 ```
 
 ---
@@ -111,7 +124,7 @@ super groups using molecular information from the [Chemical Component Dictionary
 [DrugBank](http://www.drugbank.ca) and the [Human Metabolome Database](http://www.hmdb.ca) respectively, resulting in
  the following file (provided in this repository):
  
-```
+```bash
 downloaded_data/ligand_groups.txt
 ```
  
@@ -154,4 +167,20 @@ python create_fasta.py --distance <abbreviation> --prefix XX
 python evaluate_uniqueness.py --create_alignments --distance <abbreviation>
 python evaluate_uniqueness.py --distance <abbreviation>
 python generate_domain_scores.py --distance <abbreviation>
+```
+
+### Measuring standard errors and distance consistencies
+
+In our paper, we also present results showing the bootstrapped standard error of all binding propensities, across domain-ligand pairs, as well as consistencies of domain-to-ligand distances across 50-50 random splits of domain-ligand pair instances. 
+
+* To generate bootstrapped standard errors of binding propensities, run:
+
+```bash
+python cross_validate_scores.py --stderr --start X --end X
+```
+
+* To generate distance consistencies for each domain-ligand pair, run:
+
+```bash
+python cross_validate_scores.py --consistency --start X --end X
 ```
