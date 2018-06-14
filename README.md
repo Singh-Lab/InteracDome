@@ -50,7 +50,7 @@ We suggest using a simple and intuitive score (i.e., ''mindist'') to measure the
 * To calculate the distances between each receptor amino acid residue and all corresponding ligand types, run: 
 
 ```bash
-python create_fasta.py --distance mindist --prefix XX
+python create_fasta.py --prefix XX
 ```
 
 *NOTE: Alternate ways of measuring the proximity between a protein receptor chain and ligand (which we found to result in highly correlated values and to take a much longer time to run) are described at the bottom of this page.*
@@ -84,14 +84,14 @@ and then assign per-sequence scores as in
 * To get per-domain-instance uniqueness weights, run:
 
 ```bash
-python evaluate_uniqueness.py --create_alignments --distance mindist
-python evaluate_uniqueness.py --distance mindist
+python evaluate_uniqueness.py --create_alignments
+python evaluate_uniqueness.py
 ```
 
 * Finally, we use the per-domain sequence uniqueness evaluations generated in the previous step to assign per-domain-position binding propensities, for each ligand type:
 
 ```bash
-python generate_domain_scores.py --distance mindist
+python generate_domain_scores.py
 ```
 
 ### 6: Cross-validating the precision of binding propensities
@@ -175,11 +175,11 @@ In our paper, we also present results showing the bootstrapped standard error of
 * To generate bootstrapped standard errors of binding propensities, run:
 
 ```bash
-python cross_validate_scores.py --stderr --start X --end X
+python cross_validate_scores.py --stderr --distance <abbreviation> --start X --end X
 ```
 
 * To generate distance consistencies for each domain-ligand pair, run:
 
 ```bash
-python cross_validate_scores.py --consistency --start X --end X
+python cross_validate_scores.py --consistency --distance <abbreviation> --start X --end X
 ```
