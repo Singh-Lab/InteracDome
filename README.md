@@ -84,7 +84,6 @@ and then assign per-sequence scores as in
 * To get per-domain-instance uniqueness weights, run:
 
 ```bash
-if [ ! -d processed_data/domains/alignments ]; then mkdir processed_data/domains/alignments; fi
 python evaluate_uniqueness.py --create_alignments --distance mindist
 python evaluate_uniqueness.py --distance mindist
 ```
