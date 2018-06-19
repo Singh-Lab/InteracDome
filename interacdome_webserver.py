@@ -201,15 +201,15 @@ def save_consistent_domain_ligand_pairs(required_overall_precision=0.5,
       if cv_line.startswith('#') or len(cv_line[:-1].split('\t')) < 13:
         continue
 
-      (domain_name, ligand_type, _, _, instance_cnt, binding_propensities, precisions, _, _, _, _,
-       easy_binding_propensities, easy_precisions) = cv_line[:-1].split('\t')[:13]
+      (domain_name, ligand_type, _, _, instance_cnt, grouped_propensities, grouped_precisions, _, _, _, _,
+       ungrouped_propensities, ungrouped_precisions) = cv_line[:-1].split('\t')[:13]
 
       if (domain_name, ligand_type) not in passing_domains:
         continue
 
       try:
-        curve = zip(map(float, easy_binding_propensities.split(',')), map(float, easy_precisions.split(',')))
-      except:
+        curve = zip(map(float, ungrouped_propensities.split(',')), map(float, ungrouped_precisions.split(',')))
+      except ValueError:
         continue
 
       # lowest binding propensity for this particular domain-ligand pair that resulted in the minimum required precision
@@ -265,6 +265,7 @@ def save_consistent_domain_ligand_pairs(required_overall_precision=0.5,
 def datasource_website_input(outfile, pfam_path, distance='mindist', for_webserver_display=True):
   """
   :param outfile: full path to a tab-delimited file where all results should be written out to
+  :param pfam_path: full path to a directory containing Pfam-formatted HMMs in
   :param distance: how residue-ligand distances were calculated
   :param for_webserver_display: whether to truncate to only DNA, RNA, peptide, ion, metabolite, small molecule
                                 results (as displayed on website) or not
@@ -557,8 +558,9 @@ if __name__ == "__main__":
                              args.pfam_path + ('/' if not args.pfam_path.endswith('/') else ''),
                              args.distance,
                              True)  # restrict output to DNA/RNA/peptide/ion/metabolite/small molecule
-    datasource_website_input(DATAPATH + 'interacdome-webserver/interacdome_fordownload.tsv', args.distance,
+    datasource_website_input(DATAPATH + 'interacdome-webserver/interacdome_fordownload.tsv',
                              args.pfam_path + ('/' if not args.pfam_path.endswith('/') else ''),
+                             args.distance,
                              False)  # don't restrict any output
 
     for hmm in sorted(os.listdir(SCORE_PATH + args.distance + '/')):
