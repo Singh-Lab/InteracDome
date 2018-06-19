@@ -262,7 +262,7 @@ def save_consistent_domain_ligand_pairs(required_overall_precision=0.5,
 # INTERACDOME WEBSERVER FILES
 ########################################################################################################
 
-def datasource_website_input(outfile, distance='mindist', for_webserver_display=True):
+def datasource_website_input(outfile, pfam_path, distance='mindist', for_webserver_display=True):
   """
   :param outfile: full path to a tab-delimited file where all results should be written out to
   :param distance: how residue-ligand distances were calculated
@@ -301,7 +301,7 @@ def datasource_website_input(outfile, distance='mindist', for_webserver_display=
     # --------------------------------------------------------------------------------------------------
     # get the length of the domain (number of MATCH STATES)
     try:
-      with open(PFAM_PATH + domain_name + '.hmm') as hmm:
+      with open(pfam_path + domain_name + '.hmm') as hmm:
         for hmm_line in hmm:
           if hmm_line.startswith('LENG'):
             domain_length = hmm_line.strip().split()[-1]
@@ -554,9 +554,11 @@ if __name__ == "__main__":
 
     # create the two required input files (to display plots and to create downloads:
     datasource_website_input(DATAPATH + 'interacdome-webserver/interacdome_allresults.tsv',
+                             args.pfam_path + ('/' if not args.pfam_path.endswith('/') else ''),
                              args.distance,
                              True)  # restrict output to DNA/RNA/peptide/ion/metabolite/small molecule
     datasource_website_input(DATAPATH + 'interacdome-webserver/interacdome_fordownload.tsv', args.distance,
+                             args.pfam_path + ('/' if not args.pfam_path.endswith('/') else ''),
                              False)  # don't restrict any output
 
     for hmm in sorted(os.listdir(SCORE_PATH + args.distance + '/')):
