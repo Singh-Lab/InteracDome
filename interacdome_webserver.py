@@ -27,10 +27,6 @@ SCORE_PATH = DATAPATH + 'processed_data/domains/binding_scores/'
 # full path to where output files containing cross-validation evaluations will be written
 CV_PATH = DATAPATH + 'processed_data/domains/cross_validation/'
 
-# full path to where current Pfam HMMs are stored
-PFAM_PATH = DATAPATH + 'pfam/hmms-v31/'
-PFAM_PATH = '/home/snadimpa/datadb/pfam/hmms-v31/'
-
 
 ########################################################################################################
 # DOMAINS THAT BIND LIGANDS CONSISTENTLY
@@ -495,6 +491,9 @@ if __name__ == "__main__":
                       default='mindist',
                       choices={'fracin4', 'mindist', 'meandist', 'maxstd', 'meanstd', 'sumstd',
                                'maxvdw', 'meanvdw', 'sumstd'})
+  parser.add_argument('--pfam_path', type=str,
+                      help='full path to a directory containing Pfam-formatted HMMs',
+                      default=DATAPATH + 'pfam/hmms-v31/')
   parser.add_argument('--webserver', dest='create_webserver_files', action='store_true', default=False,
                       help='Calculate distance-to-ligand consistencies across 50-50 splits of domain-ligand instances')
 
@@ -542,9 +541,10 @@ if __name__ == "__main__":
     sys.stderr.write('Creating input files required for InteracDome webserver...\n')
 
     # reformat Pfam's HMM files in order to be used by gglogo:
-    if not os.path.isdir(PFAM_PATH):
-      sys.stderr.write('No such directory: ' + PFAM_PATH + '\n' +
-                       'Please specify PFAM_PATH, the full path to all Pfam HMMs, in interacdome_webserver.py\n')
+    if not os.path.isdir(args.pfam_path):
+      sys.stderr.write('No such directory: ' + args.pfam_path + '\n' +
+                       'Please specify the full path to all Pfam HMMs using the pfam_path flag as:\n' +
+                       'python interacdome_webserver.py --pfam_path <full_path_to_directory>')
       sys.exit(1)
 
 
@@ -563,5 +563,5 @@ if __name__ == "__main__":
       if hmm.endswith('_binding-scores_' + args.distance + '.txt.gz'):
         pfam_id = hmm.replace('_binding-scores_' + args.distance + '.txt.gz', '')
         if not os.path.isfile(DATAPATH + 'interacdome-webserver/pfms/' + pfam_id + '.pfm'):
-          datasource_website_hmms(PFAM_PATH + pfam_id + '.hmm',
+          datasource_website_hmms(args.pfam_path + ('/' if not args.pfam_path.endswith('/') else '') + pfam_id + '.hmm',
                                   DATAPATH + 'interacdome-webserver/pfms/' + pfam_id + '.pfm')
