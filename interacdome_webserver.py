@@ -29,6 +29,7 @@ CV_PATH = DATAPATH + 'processed_data/domains/cross_validation/'
 
 # full path to where current Pfam HMMs are stored
 PFAM_PATH = DATAPATH + 'pfam/hmms-v31/'
+PFAM_PATH = '/home/snadimpa/datadb/pfam/hmms-v31/'
 
 
 ########################################################################################################
@@ -274,15 +275,21 @@ def datasource_website_input(outfile, distance='mindist', for_webserver_display=
   :return: none, but print results to specified outfile along with success message upon completion
   """
 
-  # NOTE: these domains interacted only via their insertion states (never via a match state),
-  # listed here just for record-keeping and to remind you of discrepancies in counts for website
+  # NOTE: these domains interacted only via their *insertion* states (never via a match state), listed here
+  #   just for record-keeping and to remind you of a reason for potential discrepancies in counts for website
   skipped_insertion_states = {'PF14890_Intein_splicing', 'PF03481_SUA5', 'PF04122_CW_binding_2',
                               'PF08532_Glyco_hydro_42M', 'PF08530_PepX_C', 'PF02910_Succ_DH_flav_C',
                               'PF00031_Cystatin', 'PF01823_MACPF', 'PF00621_RhoGEF', 'PF09102_Exotox-A_target'}
 
   outhandle = open(outfile, 'w')
-  outhandle.write('\t'.join(['pfam_id', 'domain_length', 'ligand_type', 'num_unique_instances', 'num_structures',
-                             'max_achieved_precision', 'binding_propensities', 'pdb_ids']) + '\n')
+  outhandle.write('\t'.join(['pfam_id', 'domain_length', 'ligand_type', 'num_nonidentical_instances', 'num_structures',
+                             'binding_propensities',
+                             'max_achieved_precision',
+                             'propensity_at_precision_0.1',
+                             'propensity_at_precision_0.25',
+                             'propensity_at_precision_0.5',
+                             'propensity_at_precision_0.75',
+                             'pdb_ids']) + '\n')
 
   binding_propensity_files = sorted([SCORE_PATH + distance + '/' + a for a in os.listdir(SCORE_PATH + distance)
                                      if a.endswith('_binding-scores_' + distance + '.txt.gz')])
@@ -293,7 +300,7 @@ def datasource_website_input(outfile, distance='mindist', for_webserver_display=
     structures = {}  # ligand_type -> {pdb_id, pdb_id...}
     unique_instances = {}  # ligand_type -> number of unique instances
     unique_structures = {}  # ligand_type -> number of unique structures
-    best_precisions = {}  # ligand_type -> maximum achieved cross-validated precision
+    best_precisions = {}  # ligand_type -> (max, 0.1, 0.25, 0.5, 0.75) -> maximum achieved cross-validated precision
 
     # --------------------------------------------------------------------------------------------------
     # get the length of the domain (number of MATCH STATES)
@@ -304,7 +311,7 @@ def datasource_website_input(outfile, distance='mindist', for_webserver_display=
             domain_length = hmm_line.strip().split()[-1]
             break
     except:
-      print "Couldn't get length for " + domain_name + "!"
+      sys.stderr.write('Could not find length for '+domain_name+'!\n')
       continue
 
     # --------------------------------------------------------------------------------------------------
@@ -316,14 +323,14 @@ def datasource_website_input(outfile, distance='mindist', for_webserver_display=
 
       ligand_type, match_state, binding_propensity, structure_scores = bp_line[:-1].split('\t')[:4]
 
-      if for_webserver_display and ligand_type not in ['DNA_', 'DNABASE_', 'DNABACKBONE_', 'RNA_', 'RNABASE_',
-                                                       'RNABACKBONE_', 'PEPTIDE_', 'ION_', 'METABOLITE_', 'SM_']:
-        continue
       if for_webserver_display:
+        if ligand_type not in ['DNA_', 'DNABASE_', 'DNABACKBONE_', 'RNA_', 'RNABASE_', 'RNABACKBONE_',
+                               'PEPTIDE_', 'ION_', 'METABOLITE_', 'SM_']:
+          continue
         ligand_type = ligand_type.replace('_', '').lower()
 
-      # SOME domains only had modeled interactions in their insertion states....
-      if False:
+      # some domains only had modeled interactions in their insertion states....
+      if len(skipped_insertion_states) < 1:
         try:
           match_state = int(match_state)
         except ValueError:
@@ -362,24 +369,42 @@ def datasource_website_input(outfile, distance='mindist', for_webserver_display=
         continue
       _, unique_instances[ligand_type], _, unique_structures[ligand_type] = instance_cnt.split('|')[:4]
 
-      # store the maximum achieved precision
+      # store the maximum achieved precision and the per domain-ligand pair cutoffs for different precisions
+      best_precisions[ligand_type] = {'max': 0., '0.1': '--', '0.25': '--', '0.5': '--', '0.75': '--'}
       try:
-        best_precisions[ligand_type] = max(map(float, ungrouped_precisions.split(',')))
+        propensity_to_precision = dict(zip(map(float, ungrouped_propensities.split(',')),
+                                           map(float, ungrouped_precisions.split(','))))
+        best_precisions[ligand_type]['max'] = max(propensity_to_precision.values())
+        for domain_threshold in [0.1, 0.25, 0.5, 0.75]:
+          passing_propensities = [propensity for propensity, precision in propensity_to_precision.items()
+                                  if precision >= domain_threshold and propensity > 0]
+          if len(passing_propensities) > 0:
+            best_precisions[ligand_type][str(domain_threshold)] = min(passing_propensities)
       except ValueError:
-        best_precisions[ligand_type] = 0.
+        pass
 
     # --------------------------------------------------------------------------------------------------
     # write results to specified output file
     for ligand_type, score_set in scores.items():
-      outhandle.write('\t'.join([domain_name,
-                                 domain_length,
-                                 ligand_type,
-                                 unique_instances.get(ligand_type, '--'),
-                                 unique_structures.get(ligand_type, '--'),
-                                 str(best_precisions.get(ligand_type, 0.)),
+      outhandle.write('\t'.join([domain_name,  # pfam_id
+                                 domain_length,  # domain_length
+                                 ligand_type,  # ligand_type
+                                 unique_instances.get(ligand_type, '--'),  # num_nonidentical_instances
+                                 unique_structures.get(ligand_type, '--'),  # num_structures
                                  ','.join([str(score_set.get(str(mstate), 0))
-                                           for mstate in xrange(1, int(domain_length) + 1)]),
-                                 ','.join(sorted(structures[ligand_type]))]) + '\n')
+                                           for mstate in xrange(1, int(domain_length) + 1)]),  # binding_propensities
+                                 str(best_precisions.get(ligand_type, {}).get('max',
+                                                                              '--')),  # max_achieved_precision
+                                 str(best_precisions.get(ligand_type, {}).get('0.1',
+                                                                              '--')),  # propensity_at_precision_0.1
+                                 str(best_precisions.get(ligand_type, {}).get('0.25',
+                                                                              '--')),  # propensity_at_precision_0.25
+                                 str(best_precisions.get(ligand_type, {}).get('0.5',
+                                                                              '--')),  # propensity_at_precision_0.5
+                                 str(best_precisions.get(ligand_type, {}).get('0.75',
+                                                                              '--')),  # propensity_at_precision_0.75
+                                 ','.join(sorted(structures[ligand_type]))  # pdb_ids
+                                 ]) + '\n')
   outhandle.close()
   sys.stderr.write('Wrote to ' + outfile + '\n')
 
@@ -530,12 +555,13 @@ if __name__ == "__main__":
     # create the two required input files (to display plots and to create downloads:
     datasource_website_input(DATAPATH + 'interacdome-webserver/interacdome_allresults.tsv',
                              args.distance,
-                             True)  # restrict output
+                             True)  # restrict output to DNA/RNA/peptide/ion/metabolite/small molecule
     datasource_website_input(DATAPATH + 'interacdome-webserver/interacdome_fordownload.tsv', args.distance,
-                             False)
+                             False)  # don't restrict any output
 
     for hmm in sorted(os.listdir(SCORE_PATH + args.distance + '/')):
       if hmm.endswith('_binding-scores_' + args.distance + '.txt.gz'):
         pfam_id = hmm.replace('_binding-scores_' + args.distance + '.txt.gz', '')
-        datasource_website_hmms(PFAM_PATH + pfam_id + '.hmm',
-                                DATAPATH + 'interacdome-webserver/pfms/' + pfam_id + '.pfm')
+        if not os.path.isfile(DATAPATH + 'interacdome-webserver/pfms/' + pfam_id + '.pfm'):
+          datasource_website_hmms(PFAM_PATH + pfam_id + '.hmm',
+                                  DATAPATH + 'interacdome-webserver/pfms/' + pfam_id + '.pfm')
