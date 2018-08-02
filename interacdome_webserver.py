@@ -545,7 +545,7 @@ if __name__ == "__main__":
     if not os.path.isdir(args.pfam_path):
       sys.stderr.write('No such directory: ' + args.pfam_path + '\n' +
                        'Please specify the full path to all Pfam HMMs using the pfam_path flag as:\n' +
-                       'python interacdome_webserver.py --pfam_path <full_path_to_directory>')
+                       'python interacdome_webserver.py --pfam_path <full_path_to_directory>\n')
       sys.exit(1)
 
 

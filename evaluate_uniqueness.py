@@ -224,6 +224,16 @@ def create_alignment_files(domain_file, fasta_dir, alignment_dir, distance='mind
   :return: list of domain names, ligand types, and corresponding paths to alignment files
   """
 
+  # confirm that the directories we are interested in exist
+  for current_dir in [fasta_dir, alignment_dir]:
+    if not os.path.isdir(alignment_dir):
+      sys.stderr.write('Could not find directory ' + str(current_dir) + '\n')
+      sys.exit(1)
+
+  # create the output directory if need be
+  if not os.path.isdir(alignment_dir + distance):
+    call(['mkdir', alignment_dir + distance])
+
   ligand_to_group = ligand_groups()  # mapping of ligand ID -> super group
 
   # Process each domain separately:
@@ -257,13 +267,10 @@ def create_alignment_files(domain_file, fasta_dir, alignment_dir, distance='mind
     # location of the current FASTA file
     current_fasta_file = fasta_dir+pdb_id_chain[0]+'/'+pdb_id_chain[:2]+'/' + pdb_id_chain[:4]+'_'+distance+'.fa'
     if not os.path.isfile(current_fasta_file):
-      current_fasta_file = current_fasta_file+'.gz'
-      if not os.path.isfile(current_fasta_file):
-        sys.stderr.write('Could not open '+current_fasta_file+'\n')
-        continue
+      continue
 
     # find the header that corresponds to our sequence of interest
-    fasta_handle = gzip.open(current_fasta_file) if current_fasta_file.endswith('gz') else open(current_fasta_file)
+    fasta_handle = open(current_fasta_file)
     for fasta_line in fasta_handle:
       if fasta_line.startswith('>' + pdb_id_chain):
         binding_positions = [entry.split('-') for entry in
@@ -433,13 +440,81 @@ def remove_gapped_columns(seqid_to_sequence):
 
 ########################################################################################################
 
-def clear_crystal_duplicates(alignment_file):
+def find_closest_chain(pdb_id, pdb_chains, domain_location, ligand_type, distance):
+  """
+  :param pdb_id: string corresponding to the 4-digit PDB entry we are examining
+  :param pdb_chains: the subset of structure chains (e.g., A, B, C...) that contain a domain instance
+                     with an identical sequence in the same position
+  :param domain_location: string of 0-index starting position '_' 0-index ending position
+  :param ligand_type: string corresponding to the type of ligand we're calculating a distance to
+  :return: one PDB chain that is the closest (of the subset provided) to the ligand of interest
+  """
+
+  ligand_to_group = ligand_groups()  # original ligand ID -> set of groups
+
+  index_range = map(str, range(int(domain_location.split('_')[0])+1,
+                               int(domain_location.split('_')[1])+2))  # all possible binding sites to consider
+
+  distance_fasta = DATAPATH+'processed_data/fasta/'+pdb_id[0]+'/'+pdb_id[:2]+'/'+pdb_id+'_mindist.fa'
+  if not os.path.isfile(distance_fasta):
+    sys.stderr.write('Could not open '+distance_fasta+'\n')
+    return sorted(pdb_chains)[0]
+
+  chain_proximity = {}
+  distance_handle = open(distance_fasta)
+  for dist_line in distance_handle:
+    if dist_line.startswith('>'+pdb_id) and dist_line[len('>'+pdb_id):len('>'+pdb_id)+1] in pdb_chains:
+
+      current_chain = dist_line[len('>'+pdb_id):len('>'+pdb_id)+1]
+      if current_chain not in chain_proximity:
+        chain_proximity[current_chain] = {}  # aa position -> distance to ligand (within 5 angstroms)
+
+      curr_bind_pos = dist_line[dist_line.find('bindingSiteRes=') + 15:dist_line.rfind(';')].split(',')
+      curr_bind_pos = [entry.split('-') for entry in curr_bind_pos]
+
+      for (aapos, current_ligand, binding_score) in curr_bind_pos:
+
+        super_groups = ['ALL_', current_ligand] + ligand_to_group.get(current_ligand, [])
+        if not ('NUCACID_' in super_groups or 'ION_' in super_groups or 'III' in super_groups):
+          super_groups.append('SM_')
+
+        # translate all names of the ligands (if need be):
+        super_groups = [translate_ligand(orig_ligand_name) for orig_ligand_name in super_groups]
+
+        # if we are looking at the correct ligand type and this position is within the domain range we want:
+        if ligand_type in super_groups and aapos in index_range:
+          if (distance == 'mindist' and float(binding_score) <= PROXIMITY_CUTOFF) or \
+              (distance != 'mindist' and float(binding_score) >= PROXIMITY_CUTOFF):
+            if aapos not in chain_proximity[current_chain]:
+              chain_proximity[current_chain][aapos] = float(binding_score)
+
+            if distance == 'mindist':
+              chain_proximity[current_chain][aapos] = min(chain_proximity[current_chain][aapos],
+                                                          float(binding_score))
+            else:
+              chain_proximity[current_chain][aapos] = max(chain_proximity[current_chain][aapos],
+                                                          float(binding_score))
+  distance_handle.close()
+
+  total_proximity = []
+  all_chains = sorted(list(chain_proximity.keys()))
+  for chain_id, pos_to_dist in chain_proximity.items():
+    total_proximity.append((len(pos_to_dist.keys()),  # total binding positions
+                            (-1 if distance == 'mindist' else 1)*sum(pos_to_dist.values()),  # maximize this value
+                            -1*all_chains.index(chain_id)))  # inverse of the chain ID ('A', 'B', 'C') -> (0, -1, -2)
+
+  return all_chains[-1*sorted(total_proximity, reverse=True)[0][2]]
+
+
+########################################################################################################
+
+def clear_crystal_duplicates(alignment_file, ligand_type, distance):
   """
   :param alignment_file: full path to a fasta file with sequence ID (PDB ID, PDB chain, start index, end index)
   :return: a single PDB structure can have multiple (identical) protein chains, even if they belong
            to biological assemblies (there can be many different ones specified for the same structure).
            For each domain--ligand pair, we only consider sets of unique (PDB ID [no chain], ligand type, sequence)
-           before evaluating uniqueness.
+           before evaluating uniqueness; we select the identical chain that is closest to the ligand.
   """
 
   unique_domhits = {}
@@ -473,7 +548,30 @@ def clear_crystal_duplicates(alignment_file):
   unique_seq_ids = []
   for pdb_id in unique_domhits.keys():
     for dom_loc, chains in unique_domhits[pdb_id].items():
-      unique_seq_ids.append(pdb_id + sorted(list(chains))[0] + '_' + dom_loc)
+
+      if len(chains) > 1:
+
+        # ONLY in this case do we bother checking the sequence itself:
+        all_seqs = {}
+        for chain in chains:
+          current_seq = seqid_to_sequence[pdb_id+chain][int(dom_loc.split('_')[0]):int(dom_loc.split('_')[1])+1]
+          if current_seq not in all_seqs:
+            all_seqs[current_seq] = set()
+          all_seqs[current_seq].add(chain)
+
+        for current_seq, new_chains in all_seqs.items():
+          # now, we should pick the closest:
+          if len(new_chains) > 1:
+            # we want to pick the CLOSEST chain when there are multiple chains in contact with the ligand
+            unique_seq_ids.append(pdb_id + find_closest_chain(pdb_id, new_chains, dom_loc,
+                                                              ligand_type, distance) + '_' + dom_loc)
+
+          # otherwise, add each "unique" domain (i.e., unique sequence, but same location):
+          else:
+            unique_seq_ids.append(pdb_id + sorted(list(new_chains))[0] + '_' + dom_loc)
+
+      else:
+        unique_seq_ids.append(pdb_id + sorted(list(chains))[0] + '_' + dom_loc)
 
   return {seq_id: seq for seq_id, seq in seqid_to_sequence.items() if seq_id in unique_seq_ids}, \
          set([seq_id for seq_id in seqid_to_sequence.keys() if seq_id not in unique_seq_ids])
@@ -481,7 +579,7 @@ def clear_crystal_duplicates(alignment_file):
 
 ########################################################################################################
 
-def overall_alignment_score(alignment_file):
+def overall_alignment_score(alignment_file, ligand_type, distance):
   """
   :param alignment_file: full path to a FASTA-formatted multiple alignment file
   :return: the raw (i.e., not yet normalized, doesn't necessarily sum to 1) uniqueness score for each
@@ -489,7 +587,7 @@ def overall_alignment_score(alignment_file):
   """
 
   # read in the full sequence for each sequence ID
-  seqid_to_sequence, missing_seqids = clear_crystal_duplicates(alignment_file)
+  seqid_to_sequence, missing_seqids = clear_crystal_duplicates(alignment_file, ligand_type, distance)
 
   # make sure that the sequences in this alignment are all the same length
   assert len(set([len(seq) for seq in seqid_to_sequence.values()])) == 1, "Varying sequence lengths in "+alignment_file
@@ -551,7 +649,12 @@ def generate_uniqueness_scores(domain_names, ligand_types, alignment_files, outp
                          "{:,}".format(len(alignment_files)) + ') of the MSA files.\n')
         break
 
-    ordered_seqids, seqid_to_score = overall_alignment_score(curr_aln_file)  # PDB ID -> unnormalized uniqueness score
+    distance = curr_aln_file[curr_aln_file.rfind('_')+1:curr_aln_file.rfind('.aln.fa')]
+    trunc_aln_file = curr_aln_file.split('/')[-1].replace('_'+distance+'.aln.fa', '')
+    ligand_type = trunc_aln_file[trunc_aln_file[:-1].rfind('_') + 1:]
+
+    # PDB ID -> unnormalized uniqueness score
+    ordered_seqids, seqid_to_score = overall_alignment_score(curr_aln_file, ligand_type, distance)
     relative_scores = normalize_scores(seqid_to_score)  # relative scores
 
     # write the new line out to file (domain name, ligand type, number of instances, sequence_id:relative_weight,...)
@@ -593,17 +696,7 @@ if __name__ == "__main__":
     downweight redundant sequences that are prevalent in structural data.
     """
 
-    if not os.path.isdir(DATAPATH+'processed_data/fasta'):
-      sys.stderr.write('Could not find directory: '+DATAPATH+'processed_data/fasta/\n' + 
-                       'Please run: python create_fasta.py --distance '+args.distance+'\n')
-      sys.exit(1)
-
     sys.stderr.write('Creating per-domain, per ligand type, multiple sequence alignments.\n')
-
-    # check input directory existence:
-    for subdir in ['', 'domains', 'domains/alignments', 'domains/alignments/'+args.distance]:
-      if not os.path.isdir(DATAPATH+'processed_data/'+subdir):
-        call(['mkdir', DATAPATH+'processed_data/'+subdir])
 
     create_alignment_files(DOMAINS,
                            DATAPATH+'processed_data/fasta/',
@@ -621,7 +714,7 @@ if __name__ == "__main__":
     for subdir in ['', 'domains', 'domains/alignments', 'domains/alignments/'+args.distance]:
       if not os.path.isdir(DATAPATH+'processed_data/'+subdir):
         sys.stderr.write('ERROR, no such directory: '+DATAPATH+'processed_data/'+subdir+'\n')
-        sys.stderr.write('Please run python '+os.getcwd()+'/evaluate_uniqueness.py --create_alignments --distance ' +
+        sys.stderr.write('Please run python '+os.getcwd()+'/evaluate_uniqueness.py --create_alignments --' +
                          args.distance+'\n')
         sys.exit(1)
 

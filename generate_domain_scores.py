@@ -164,7 +164,6 @@ def process_fasta_file(fasta_file, pdbid_pdbchain_subset, ligand_to_group, bindi
   :param ligand_to_group: get the mapping from ligand type to super group
   :param binding_positions: existing dictionary to be updated (if need be) of ligand_type -> pdbID-pdbChain ->
                             1-index AA position -> binding_score
-  :param distance: string corresponding to the type of distance statistic we've been using
   :return: None, but update the input binding_positions data structure
   """
 
@@ -196,18 +195,17 @@ def process_fasta_file(fasta_file, pdbid_pdbchain_subset, ligand_to_group, bindi
             binding_positions[ligand_type] = {}
           if pdbid_pdbchain not in binding_positions[ligand_type]:
             binding_positions[ligand_type][pdbid_pdbchain] = {}
-          if aapos not in binding_positions[ligand_type][pdb_id_pdbchain]:
+          if aapos not in binding_positions[ligand_type][pdbid_pdbchain]:
             binding_positions[ligand_type][pdbid_pdbchain][aapos] = float(binding_score)
 
-          # reset the minimum (or maximum!) score if need be,
-          # for instance, if the same structure had multiple ion types or multiple nucleic acid types, we want
-          # to store the "closer" ligand distance
-          if distance == 'mindist':
+          if distance in ['mindist', 'meandist']:
             binding_positions[ligand_type][pdbid_pdbchain][aapos] = min(float(binding_score),
-                                                                        binding_positions[ligand_type][pdbid_pdbchain][aapos])
+                                                                        binding_positions[ligand_type][pdbid_pdbchain][
+                                                                          aapos])
           else:
             binding_positions[ligand_type][pdbid_pdbchain][aapos] = max(float(binding_score),
-                                                                        binding_positions[ligand_type][pdbid_pdbchain][aapos])
+                                                                        binding_positions[ligand_type][pdbid_pdbchain][
+                                                                          aapos])
 
   fasta_handle.close()
 
@@ -346,8 +344,8 @@ def create_binding_scores(uniqueness_file, fasta_dir, alignment_dir, binding_sco
                                       ','.join([seqid+':'+str(rel_wt)+':'+str(value) for
                                                 seqid, (value, rel_wt) in sorted(distribution.items())
                                                 if rel_wt > 0. and
-                                                ((distance == 'mindist' and value < DISTANCE_CUTOFF) or
-                                                 (distance != 'mindist' and value > 0.))])])+'\n')
+                                                ((distance in ['mindist', 'meandist'] and value < DISTANCE_CUTOFF) or
+                                                 (distance not in ['mindist', 'meandist'] and value > 0.))])])+'\n')
     out_handle.close()
     total_processed_domains += 1
 
@@ -393,6 +391,7 @@ if __name__ == "__main__":
 
   # Create the new binding scores output directory if needed
   output_directory = DATAPATH+'processed_data/domains/binding_scores/'
+
   for subdir in ['', args.distance]:
     if not os.path.isdir(output_directory+subdir):
       call(['mkdir', output_directory+subdir])
