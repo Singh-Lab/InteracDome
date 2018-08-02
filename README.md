@@ -5,7 +5,7 @@ In this project, we use information from protein co-complex structures to determ
 within domains may be involved in binding different ligands. If you use data or scripts from this repository, 
 please cite:
 
-> Kobren, S.N. and Singh, M. (2018) "Data-driven discovery of the InteracDome." *Manuscript in preparation.* [InteracDome Web Server](https://interacdome.princeton.edu "InteracDome")
+> Kobren, S.N. and Singh, M. (2018) "Systematic domain-based aggregation of protein structures highlights DNA-, RNA-, and other ligand-binding positions." *Manuscript in submission.* [InteracDome Web Server](https://interacdome.princeton.edu "InteracDome")
 
 ### 1: Downloading preliminary data
 
@@ -15,7 +15,6 @@ step can take a long time and will require substantial hard drive space (4.1GB).
 ```bash
 python download_biolip.py --initialize
 ```
-
 
 * You **must** update the BioLiP data that you just downloaded (as BioLiP releases weekly updates) by running:
 
@@ -111,6 +110,16 @@ python cross_validate_scores.py --start X --end X
 ```bash
 ls processed_data/domains/binding_scores/mindist | wc -l
 ```
+
+### 7: Recreate InteracDome webserver files
+
+Finally, to recreate the two data files required for the InteracDome webserver, run:
+
+```bash
+python interacdome_webserver.py --pfam_path <path_to_hmms> --webserver
+```
+
+* You *must* specify the full path to a directory containing all Pfam HMMs.
 
 ---
 
