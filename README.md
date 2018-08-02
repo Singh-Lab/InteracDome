@@ -111,7 +111,7 @@ python cross_validate_scores.py --start X --end X
 ls processed_data/domains/binding_scores/mindist | wc -l
 ```
 
-### 7: Recreate InteracDome webserver files
+### 7: Recreating InteracDome webserver files
 
 Finally, to recreate the two data files required for the InteracDome webserver, run:
 
