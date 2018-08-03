@@ -554,7 +554,7 @@ def clear_crystal_duplicates(alignment_file, ligand_type, distance):
         # ONLY in this case do we bother checking the sequence itself:
         all_seqs = {}
         for chain in chains:
-          current_seq = seqid_to_sequence[pdb_id+chain][int(dom_loc.split('_')[0]):int(dom_loc.split('_')[1])+1]
+          current_seq = seqid_to_sequence[pdb_id+chain+'_'+dom_loc]
           if current_seq not in all_seqs:
             all_seqs[current_seq] = set()
           all_seqs[current_seq].add(chain)
