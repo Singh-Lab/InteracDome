@@ -113,13 +113,29 @@ ls processed_data/domains/binding_scores/mindist | wc -l
 
 ### 7: Recreating InteracDome webserver files
 
-Finally, to recreate the two data files required for the InteracDome webserver, run:
+Finally, to recreate the two data files required for the InteracDome webserver, run the following, remembering that you *must* specify the full path to a directory containing all Pfam HMMs:
 
 ```bash
 python interacdome_webserver.py --pfam_path <path_to_hmms> --webserver
 ```
 
-* You *must* specify the full path to a directory containing all Pfam HMMs.
+You can also create lists of domains and binding propensities that pass different cutoffs by running the following:
+
+```bash
+python interacdome_webserver.py --pfam_path <path_to_hmms>
+```
+
+Possible options and their default values are listed below:
+
+| Argument | Default | Description | 
+| ------------ | -------- | :----------------- |
+| --precision | 0.5 | minimum cross-validated precision (where all instances were split into 10 folds) to consider a particular domain-ligand pair |
+| --grouped_precision | 0. | minimum cross-validated precision (where *groups* of instances with &ge;90% sequence identity were split into 10 folds) to consider a particular domain-ligand pair |
+| --threshold_precision | 0.5 | minimum (ungrouped) cross-validated precision achieved for a binding propensity to be used to infer ligand-binding sites | 
+| --structures | 3 | minimum number of distinct PDB entries containing a domain-ligand pair instance | 
+| --instances | 0 | minimum number of domain-ligand pair instances | 
+| --unique_instances | 3 | minimum number of domain-ligand pair instances with *nonredundant* sequences | 
+| --groups | 0 | minimum number of domain-ligand pair instances with *&lt;90% sequence identity* |
 
 ---
 
