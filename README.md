@@ -129,13 +129,13 @@ Possible options and their default values are listed below:
 
 | Argument | Default | Description | 
 | ------------ | -------- | :----------------- |
-| --precision | 0.5 | minimum cross-validated precision (where all instances were split into 10 folds) to consider a particular domain-ligand pair |
-| --grouped_precision | 0. | minimum cross-validated precision (where *groups* of instances with &ge;90% sequence identity were split into 10 folds) to consider a particular domain-ligand pair |
-| --threshold_precision | 0.5 | minimum (ungrouped) cross-validated precision achieved for a binding propensity to be used to infer ligand-binding sites | 
-| --structures | 3 | minimum number of distinct PDB entries containing a domain-ligand pair instance | 
-| --instances | 0 | minimum number of domain-ligand pair instances | 
-| --unique_instances | 3 | minimum number of domain-ligand pair instances with *nonredundant* sequences | 
-| --groups | 0 | minimum number of domain-ligand pair instances with *&lt;90% sequence identity* |
+| <nobr>--precision</nobr> | 0.5 | minimum cross-validated precision (where all instances were split into 10 folds) to consider a particular domain-ligand pair |
+| <nobr>--grouped_precision</nobr> | 0. | minimum cross-validated precision (where *groups* of instances with &ge;90% sequence identity were split into 10 folds) to consider a particular domain-ligand pair |
+| <nobr>--threshold_precision</nobr> | 0.5 | minimum (ungrouped) cross-validated precision achieved for a binding propensity to be used to infer ligand-binding sites | 
+| <nobr>--structures</nobr> | 3 | minimum number of distinct PDB entries containing a domain-ligand pair instance | 
+| <nobr>--instances</nobr> | 0 | minimum number of domain-ligand pair instances | 
+| <nobr>--unique_instances</nobr> | 3 | minimum number of domain-ligand pair instances with *nonredundant* sequences | 
+| <nobr>--groups</nobr> | 0 | minimum number of domain-ligand pair instances with *&lt;90% sequence identity* |
 
 ---
 
