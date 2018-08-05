@@ -129,13 +129,13 @@ Possible options and their default values are listed below:
 
 | Argument | Default | Description | 
 | ------------ | -------- | :----------------- |
-| <span style="white-space: nowrap">--precision</span> | 0.5 | minimum cross-validated precision (where all instances were split into 10 folds) to consider a particular domain-ligand pair |
-| <span style="white-space: nowrap">--grouped_precision</span> | 0. | minimum cross-validated precision (where *groups* of instances with &ge;90% sequence identity were split into 10 folds) to consider a particular domain-ligand pair |
-| <span style="white-space: nowrap">--threshold_precision</span> | 0.5 | minimum (ungrouped) cross-validated precision achieved for a binding propensity to be used to infer ligand-binding sites | 
-| <span style="white-space: nowrap">--structures</span> | 3 | minimum number of distinct PDB entries containing a domain-ligand pair instance | 
-| <span style="white-space: nowrap">--instances</span> | 0 | minimum number of domain-ligand pair instances | 
-| <span style="white-space: nowrap">--unique_instances</span> | 3 | minimum number of domain-ligand pair instances with *nonredundant* sequences | 
-| <span style="white-space: nowrap">--groups</span> | 0 | minimum number of domain-ligand pair instances with *&lt;90% sequence identity* |
+| &#8209;&#8209;precision | 0.5 | minimum cross-validated precision (where all instances were split into 10 folds) to consider a particular domain-ligand pair |
+| &#8209;&#8209;grouped_precision | 0. | minimum cross-validated precision (where *groups* of instances with &ge;90% sequence identity were split into 10 folds) to consider a particular domain-ligand pair |
+| &#8209;&#8209;threshold_precision | 0.5 | minimum (ungrouped) cross-validated precision achieved for a binding propensity to be used to infer ligand-binding sites | 
+| &#8209;&#8209;structures | 3 | minimum number of distinct PDB entries containing a domain-ligand pair instance | 
+| &#8209;&#8209;instances | 0 | minimum number of domain-ligand pair instances | 
+| &#8209;&#8209;unique_instances | 3 | minimum number of domain-ligand pair instances with *nonredundant* sequences | 
+| &#8209;&#8209;groups | 0 | minimum number of domain-ligand pair instances with *&lt;90% sequence identity* |
 
 ---
 
