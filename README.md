@@ -119,7 +119,13 @@ Finally, to recreate the two data files required for the InteracDome webserver, 
 python interacdome_webserver.py --pfam_path <path_to_hmms> --webserver
 ```
 
-You can also create lists of domains and binding propensities that pass different cutoffs by running the following:
+---
+
+*NOTE: The following scripts run optional steps.*
+
+### Generating lists of domain-ligand pairs and propensities that pass certain thresholds
+
+You can create lists of domains and binding propensities that pass different cutoffs by running the following:
 
 ```bash
 python interacdome_webserver.py --pfam_path <path_to_hmms>
@@ -136,10 +142,6 @@ Possible options and their default values (corresponding to the "confidently-mod
 | &#8209;&#8209;instances | 0 | minimum number of domain-ligand pair instances | 
 | &#8209;&#8209;unique_instances | 3 | minimum number of domain-ligand pair instances with *nonredundant* sequences | 
 | &#8209;&#8209;groups | 0 | minimum number of domain-ligand pair instances with *&lt;90% sequence identity* |
-
----
-
-*NOTE: The following scripts run optional steps.*
 
 ### Grouping small molecule ligand types
 
