@@ -162,7 +162,7 @@ def subtype_nuc_ligand(ligand_structure_file):
 ########################################################################################################
 
 def create_distlist_files(annotation_file, pdb_ids, receptor_pdb_dir, ligand_pdb_dir,
-                          distlist_dir, annot_dir, include_backbone=False):
+                          distlist_dir, annot_dir, force_overwrite=False, include_backbone=False):
   """
   :param annotation_file: full path to a tab-delineated annotation file (as downloaded from BioLiP),
                           e.g., DATAPATH+'processed_data/annotations/current_annotations.txt'
@@ -205,6 +205,10 @@ def create_distlist_files(annotation_file, pdb_ids, receptor_pdb_dir, ligand_pdb
     # two output files: (1) updated annotation file, (2) a "_distances.txt.gz" file with pairwise Euclidean distances
     new_annot_file = annot_dir + prefix + current_pdb_id + '_annotation.txt'
     distlist_file = distlist_dir + prefix + current_pdb_id + '_distances.txt.gz'
+
+    # If the distances file already exists, then skip it
+    if os.path.isfile(distlist_file) and not force_overwrite:
+      continue
 
     annot_outhandle = gzip.open(new_annot_file, 'w') if new_annot_file.endswith('gz') else open(new_annot_file, 'w')
     distlist_outhandle = gzip.open(distlist_file, 'w') if distlist_file.endswith('gz') else open(distlist_file, 'w')
@@ -549,9 +553,12 @@ if __name__ == "__main__":
   parser.add_argument('--prefix', type=str,
                       help='Two letter prefix to subset of PDB IDs to process',
                       default='10')
+  parser.add_argument('--force', dest='force', action='store_true', 
+                      help='Forcibly overwrite distance files that already exist (False by default)')
   parser.add_argument('--update_overlap', dest='update_overlap', action='store_true',
                       help='Add Gaussian distribution overlap estimates to existing Euclidean distances?')
   parser.set_defaults(update_overlap=False)
+  parser.set_defaults(force=False)
 
   args = parser.parse_args()
 
@@ -601,7 +608,7 @@ if __name__ == "__main__":
 
     # create initial distance files:
     create_distlist_files(current_annotation_file, subset_pdb_ids, receptor_directory, ligand_directory,
-                          distance_out_directory, annotations_out_directory)
+                          distance_out_directory, annotations_out_directory, args.force)
 
   # ----------------------------------------------------------------------------------------------------
   else:

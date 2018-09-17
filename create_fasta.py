@@ -193,7 +193,7 @@ def create_biolip_fasta_files(distance_file, fasta_file, current_pdb_id, distanc
   distance_handle.close()
 
   # create the fasta file as specified:
-  fasta_outhandle = open(fasta_file, 'w')
+  fasta_outhandle = gzip.open(fasta_file, 'w') if fasta_file.endswith('gz') else open(fasta_file, 'w')
 
   for pdb_chain_id in sorted(receptor_chain_sequences.keys()):
     if pdb_chain_id not in binding_residues:
@@ -227,11 +227,14 @@ if __name__ == "__main__":
   parser.add_argument('--prefix', type=str,
                       help='Two letter prefix to subset of PDB IDs to process',
                       default='10')
+  parser.add_argument('--force', dest='force', action='store_true',
+                      help='Forcibly overwrite fasta files that have already been written; otherwise skip')
   parser.add_argument('--distance', type=str,
                       help='How to record the distance between receptor and ligand?',
                       default='mindist',
                       choices={'mindist', 'fracin4', 'meandist', 'maxstd', 'meanstd', 'sumstd',
                                'maxvdw', 'meanvdw', 'sumvdw'})
+  parser.set_defaults(force=False)
 
   args = parser.parse_args()
 
@@ -279,7 +282,12 @@ if __name__ == "__main__":
 
   for infile in distlist_files:
     distance_infile = distance_out_directory + infile
-    fasta_outfile = fasta_out_directory+infile.replace('_distances.txt.gz', '_'+args.distance+'.fa')
+    fasta_outfile = fasta_out_directory+infile.replace('_distances.txt.gz', '_'+args.distance+'.fa.gz')
+
+    # if this file already exists, and we're not forcibly overwriting, then skip!
+    if os.path.isfile(fasta_outfile) and not args.force:
+      continue
+      
     create_biolip_fasta_files(distance_infile, fasta_outfile, infile[27:31], args.distance)
 
   sys.stderr.write('Successfully wrote '+"{:,}".format(len(distlist_files))+' '+args.distance+' fasta files to ' +
