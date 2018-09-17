@@ -217,6 +217,45 @@ def create_biolip_fasta_files(distance_file, fasta_file, current_pdb_id, distanc
 
 ########################################################################################################
 
+def create_hmmer_fasta_file(annotation_dir=DATAPATH+'downloaded_data/annotations/',
+                            annotation_file=DATAPATH+'processed_data/annotations/current_annotations.txt'):
+  """
+  :param annotation_dir: full path to a directory containing annotation files downloaded from BioLiP
+  :param annotation_file: full path to a file containing tab-delimited information about PDB identifiers,
+                          chains, and sequences
+  :return: None, but print success message upon successful write of FASTA-formatted file (to find domains)
+  """
+
+  # first, get the date of the last downloaded annotation file:
+  year, month, day = sorted([map(int, fname[fname.find('BioLiP_')+7:fname.rfind('.txt')].split('-'))
+                             for fname in os.listdir(annotation_dir)
+                             if fname.startswith('BioLiP_') and fname.endswith('.txt')])[-1]
+  latest_date = str(year)+'-'+str(month).zfill(2)+'-'+str(day).zfill(2)
+
+  out_fasta_file = DATAPATH+'processed_data/annotations/BioLiP_'+latest_date+'_nonredundant.fa'
+  recorded_chains = {}  # keep track of which chains have already been written to the file
+
+  annot_handle = open(annotation_file)
+  for annot_line in annot_handle:
+    seq_id = ''.join(annot_line.strip().split()[:2])
+    seq = annot_line.strip().split()[-1]
+
+    if seq not in recorded_chains:
+      recorded_chains[seq] = set()
+    recorded_chains[seq].add(seq_id)
+  annot_handle.close()
+
+  # write nonredundant results to outfile
+  fasta_handle = open(out_fasta_file, 'w')
+  for seq_index, (seq, seq_ids) in sorted(recorded_chains):
+    fasta_handle.write('>seq'+str(seq_index)+' '+','.join(sorted(list(seq_ids)))+'\n'+seq+'\n')
+  fasta_handle.close()
+
+  sys.stderr.write('All protein receptor chains (as of '+latest_date+') are found in '+out_fasta_file+'\n')
+
+
+########################################################################################################
+
 if __name__ == "__main__":
 
   # Parse the command-line arguments
@@ -229,12 +268,15 @@ if __name__ == "__main__":
                       default='10')
   parser.add_argument('--force', dest='force', action='store_true',
                       help='Forcibly overwrite fasta files that have already been written; otherwise skip')
+  parser.add_argument('--hmmer_input', dest='hmmer_input', action='store_true',
+                      help='Create single FASTA file to run domain-finding algorithm on')
   parser.add_argument('--distance', type=str,
                       help='How to record the distance between receptor and ligand?',
                       default='mindist',
                       choices={'mindist', 'fracin4', 'meandist', 'maxstd', 'meanstd', 'sumstd',
                                'maxvdw', 'meanvdw', 'sumvdw'})
   parser.set_defaults(force=False)
+  parser.set_defaults(hmmer_input=False)
 
   args = parser.parse_args()
 
@@ -244,8 +286,12 @@ if __name__ == "__main__":
 
   if not os.path.isfile(current_annotation_file):
     sys.stderr.write('Could not open '+current_annotation_file+'\n')
-    sys.stderr.write('Please run python '+os.getcwd()+'/download_biolip.py\n')
+    sys.stderr.write('Please run python '+DATAPATH+'/download_biolip.py\n')
     sys.exit(1)
+
+  if args.hmmer_input:
+    create_hmmer_fasta_file(DATAPATH+'downloaded_data/annotations/', current_annotation_file)
+    sys.exit(0)
 
   # find the subset of PDB IDs to run on:
   subset_pdb_ids = set()
