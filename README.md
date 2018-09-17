@@ -58,15 +58,21 @@ python create_fasta.py --prefix XX
 
 You can use whatever method you prefer to find domains in your protein receptor chain sequences. 
 
+* To create a single nonredundant FASTA file of protein chain sequences to search for domain instances, run:
+
+```bash
+python create_fasta.py --hmmer_input
+```
+
 In our paper, we downloaded all [Pfam-A (version 31)](http://pfam.xfam.org) domains and ran [HMMER](http://hmmer.org) 
 locally to find domain hits. General code to run this step of the pipeline can be found at 
 <https://github.com/Singh-Lab/run-hmmer>.
 
-* The output of these steps, run on BioLiP (version 2017-06-28) can be obtained by running:
+* The output of these steps, run on BioLiP (version 2018-09-12) can be obtained by running:
  
 ```bash
 if [ ! -d processed_data/domains ]; then mkdir processed_data/domains; fi
-BIOLIP_DOMAINS="BioLiP_2017-06-28-domains-pfam_v31.tsv.gz"
+BIOLIP_DOMAINS="BioLiP_2018-09-12-domains-pfam_v31.tsv.gz"
 wget http://compbio.cs.princeton.edu/interacdome/$BIOLIP_DOMAINS -O processed_data/domains/$BIOLIP_DOMAINS
 ```
 
