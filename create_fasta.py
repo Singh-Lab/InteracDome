@@ -248,7 +248,7 @@ def create_hmmer_fasta_file(annotation_dir=DATAPATH+'downloaded_data/annotations
 
   # write nonredundant results to outfile
   fasta_handle = open(out_fasta_file, 'w')
-  for seq_index, (seq, seq_ids) in sorted(recorded_chains):
+  for seq_index, (seq, seq_ids) in sorted(recorded_chains.items()):
     fasta_handle.write('>seq'+str(seq_index)+' '+','.join(sorted(list(seq_ids)))+'\n'+seq+'\n')
   fasta_handle.close()
 
