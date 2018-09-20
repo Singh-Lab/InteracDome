@@ -40,6 +40,15 @@ a subset of PDB IDs that begin with a specific 2-character prefix (e.g., 2m).
 ls downloaded_data/receptor/ -1 | cut -c1-2 | sort -u
 ```
 
+**NOTE: This step produces files that take up *a lot* of space.** You must save these files if you are interested in 
+computing [alternate distance measures](#computing-alternate-binding-propensity-scores). However, they are 
+otherwise only needed for the immediate next step. To save space wherever you are running in parallel, for each prefix, run the following:
+
+```bash
+time python calculate_distances.py --prefix AB
+time python create_fasta.py --prefix AB
+rm -rf processed_data/distances/A/AB/*
+```
 
 ### 3: Computing ligand-proximity scores for each protein position
 

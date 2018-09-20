@@ -148,6 +148,7 @@ def create_biolip_fasta_files(distance_file, fasta_file, current_pdb_id, distanc
   rename_ligand_id = {}  # original ligand ID -> newly named ligand ID (in this case, unnecessary)
 
   distance_handle = gzip.open(distance_file) if distance_file.endswith('gz') else open(distance_file)
+  receptor_sequence = ''
   for distline in distance_handle:
     if distline.startswith('#'):
       continue
