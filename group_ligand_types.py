@@ -493,7 +493,10 @@ def calculate_tanimoto(alt_ligand_file, smiles_string_index, all_alt_smiles_file
 
       # and store the output from babel including the Tanimoto coefficient
       tanimoto_file = '/tmp/' + random_filename() + '.out'
-      call(['babel', current_orig_smiles_file, all_alt_smiles_file, '-ofpt', tanimoto_file, '2>', '/dev/null'],
+      print ' '.join(['babel', current_orig_smiles_file, all_alt_smiles_file,
+                     '-ofpt', tanimoto_file, '2>', '/dev/null'])
+      call(' '.join(['babel', current_orig_smiles_file, all_alt_smiles_file,
+                     '-ofpt', tanimoto_file, '2>', '/dev/null']),
            shell=True)
       call(['rm', current_orig_smiles_file])
 
@@ -676,8 +679,8 @@ def create_ligand_group_list(ligand_group_file=DATAPATH+'ligand_groups.txt'):
 
   out_handle = gzip.open(ligand_group_file, 'w') if ligand_group_file.endswith('gz') else open(ligand_group_file, 'w')
   out_handle.write('\n'.join(['# Groupings of all ligands that may be found in the BioLiP structural database',
-                              '# The 8 nucleic acids entries ("NUCACID_") include: ' +
-                              'NUCDNA, NUCDNAB, NUCRNA, NUCRNAB, A, U, C, G',
+                              '# The 4 nucleic acids entries ("NUCACID_") include: ' +
+                              'NUCDNA, NUCDNAB, NUCRNA, NUCRNAB',
                               '# The 2 DNA entries ("DNA_") include: NUCDNA, NUCDNAB',
                               '# The 2 RNA entries ("RNA_") include: NUCRNA, NUCRNAB',
                               '# All '+str(len(ions))+' ion entries ("ION_") were extracted from wwPDB\'s Chemical ' +
