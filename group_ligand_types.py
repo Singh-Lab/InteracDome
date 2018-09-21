@@ -177,7 +177,7 @@ def download_and_parse_hmdb(hmdb_path=DATAPATH+'hmdb/',
   files_processed = 0
   # create an element tree parser:
   rt = element_tree.parse(hmdb_path + 'hmdb_metabolites.xml').getroot()
-  for e in rt.findall('.//metabolite'):
+  for e in rt:
 
     # NOTE: we have to try/except because some entries have Unicode characters that are not included in
     # basic ASCII (and cannot be written out) -- THIS is why we write directly instead of storing
