@@ -287,8 +287,6 @@ def download_and_parse_drugbank(drugbank_path=DATAPATH + 'drugbank/',
     smiles, inchi, inchikey, = '', '', ''
     ids = set()
 
-
-
     if drug.find(prefix + 'calculated-properties') is not None:
       for prop in drug.find(prefix + 'calculated-properties').findall(prefix + 'property'):
         if prop.find(prefix + 'kind').text == 'SMILES':
@@ -562,6 +560,7 @@ def check_inputs(tanimoto_file=DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz',
     if not os.path.isfile(parsed_file):
       sys.stderr.write('Downloading and parsing raw data into ' + parsed_file + '\n')
       parse_function()
+      sys.exit(1)
 
     # and the original ligand file:
     if not os.path.isfile(original_ligand_file):
