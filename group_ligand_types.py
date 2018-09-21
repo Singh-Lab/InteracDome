@@ -275,7 +275,11 @@ def download_and_parse_drugbank(drugbank_path=DATAPATH + 'drugbank/',
 
   # start to parse the drugbank XML file:
   e = element_tree.parse(drug_file).getroot()
-  prefix = ''  # e.tag[e.tag.find('{'):e.tag.find('}') + 1]
+  prefix = e.tag[e.tag.find('{'):e.tag.find('}') + 1]
+
+  for child in e:
+    print child.tag
+  sys.exit(1)
 
   processed_drugs = 0
   for drug in e.findall(prefix + 'drug'):
@@ -283,8 +287,7 @@ def download_and_parse_drugbank(drugbank_path=DATAPATH + 'drugbank/',
     smiles, inchi, inchikey, = '', '', ''
     ids = set()
 
-    for child in drug:
-      print child.tag
+
 
     if drug.find(prefix + 'calculated-properties') is not None:
       for prop in drug.find(prefix + 'calculated-properties').findall(prefix + 'property'):
