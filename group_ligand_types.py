@@ -275,7 +275,7 @@ def download_and_parse_drugbank(drugbank_path=DATAPATH + 'drugbank/',
 
   # start to parse the drugbank XML file:
   e = element_tree.parse(drug_file).getroot()
-  prefix = e.tag[e.tag.find('{'):e.tag.find('}') + 1]
+  prefix = ''  # e.tag[e.tag.find('{'):e.tag.find('}') + 1]
 
   processed_drugs = 0
   for drug in e.findall(prefix + 'drug'):
@@ -622,6 +622,7 @@ def compare_ligands_to_alternate_molecules():
   drugbank_raw_data = DATAPATH + 'drugbank/drugbank-parsed.tsv'
   drugbank_smiles_index = 3
   check_inputs(drugbank_tanimoto_file, drugbank_raw_data, download_and_parse_drugbank, drugbank_smiles_index)
+  sys.exit(1)
 
   drug_group = similar_ligands(drugbank_tanimoto_file)
 
