@@ -177,7 +177,7 @@ def download_and_parse_hmdb(hmdb_path=DATAPATH+'hmdb/',
   files_processed = 0
   # create an element tree parser:
   rt = element_tree.parse(hmdb_path + 'hmdb_metabolites.xml').getroot()
-  for e in rt:
+  for e in rt.findall('metabolite'):
 
     # NOTE: we have to try/except because some entries have Unicode characters that are not included in
     # basic ASCII (and cannot be written out) -- THIS is why we write directly instead of storing
@@ -282,6 +282,9 @@ def download_and_parse_drugbank(drugbank_path=DATAPATH + 'drugbank/',
 
     smiles, inchi, inchikey, = '', '', ''
     ids = set()
+
+    for child in drug:
+      print child.tag
 
     if drug.find(prefix + 'calculated-properties') is not None:
       for prop in drug.find(prefix + 'calculated-properties').findall(prefix + 'property'):
