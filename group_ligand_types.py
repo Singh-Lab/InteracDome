@@ -165,7 +165,7 @@ def download_and_parse_hmdb(hmdb_path=DATAPATH+'hmdb/',
 
   if not os.path.isfile(metabolites_file):
     call(['wget', 'http://www.hmdb.ca/system/downloads/current/hmdb_metabolites.zip', '-O', metabolites_file])
-    call('unzip ' + metabolites_file, shell=True)
+    call(['unzip', metabolites_file, '-d', hmdb_path[:-1]])
 
   # write to the output handle as we parse the files, 1 by 1:
   out_handle = gzip.open(outfile, 'w') if outfile.endswith('gz') else open(outfile, 'w')
