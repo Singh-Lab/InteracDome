@@ -276,7 +276,6 @@ def download_and_parse_drugbank(drugbank_path=DATAPATH + 'drugbank/',
   # start to parse the drugbank XML file:
   e = element_tree.parse(drug_file).getroot()
   prefix = e.tag[e.tag.find('{'):e.tag.find('}') + 1]
-  print prefix
 
   processed_drugs = 0
   for drug in e.findall(prefix + 'drug'):
@@ -557,7 +556,6 @@ def check_inputs(tanimoto_file=DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz',
     if not os.path.isfile(parsed_file):
       sys.stderr.write('Downloading and parsing raw data into ' + parsed_file + '\n')
       parse_function()
-      sys.exit(1)
 
     # and the original ligand file:
     if not os.path.isfile(original_ligand_file):

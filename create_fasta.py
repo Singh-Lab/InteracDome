@@ -258,6 +258,54 @@ def create_hmmer_fasta_file(annotation_dir=DATAPATH+'downloaded_data/annotations
 
 ########################################################################################################
 
+def inflate_nr_file(original_fasta_file, nonredundant_results_file, output_file):
+  """
+  :param original_fasta_file: full path to a FASTA file created with the create_hmmer_fasta_file function,
+                              where nonredundant sequence identifiers are linked to a comma-delimited list of
+                              redundant, original sequence identifiers in the FASTA header for each sequence
+  :param nonredundant_results_file: full path to a tab-delimited file where the first entry of each line is a
+                                    nonredundant sequence identifier
+  :param output_file: full path to an output file where the original nonredundant results file has been "inflated"
+                      such that each entry with a nonredundant sequence identifier has been replaced with possibly
+                      many duplicate lines containing redundant sequence identifiers
+  :return: none, but print success message upon successful write to file
+  """
+
+  # get mapping from nonredundant identifier to set of redundant identifiers:
+  seqid_mapping = {}
+  fasta_handle = gzip.open(original_fasta_file) if original_fasta_file.endswith('gz') else open(original_fasta_file)
+  for fasta_line in fasta_handle:
+    if fasta_line.startswith('>'):
+      nr_id, orig_ids = fasta_line[1:-1].split()
+      seqid_mapping[nr_id] = orig_ids.split(',')
+  fasta_handle.close()
+
+  # open the output file to write to
+  out_handle = gzip.open(output_file, 'w') if output_file.endswith('gz') else open(output_file, 'w')
+
+  # and go through the results file, writing out new lines as necessary
+  if nonredundant_results_file.endswith('gz'):
+    results_handle = gzip.open(nonredundant_results_file)
+  else:
+    results_handle = open(nonredundant_results_file)
+
+  for results_line in results_handle:
+    if results_line.startswith('#'):
+      out_handle.write(results_line)
+    elif results_line.split()[0] in seqid_mapping:
+      nr_id = results_line.split()[0]
+      for orig_id in seqid_mapping[nr_id]:
+        out_handle.write('\t'.join([orig_id] + results_line.split('\t')[1:]))  # this should include a newline
+    else:
+      sys.stderr.write('Could not parse line:\n'+results_line)
+  results_handle.close()
+  out_handle.close()
+
+  sys.stderr.write('Inflated results in '+output_file+'\n')
+
+
+########################################################################################################
+
 if __name__ == "__main__":
 
   # Parse the command-line arguments
@@ -268,17 +316,25 @@ if __name__ == "__main__":
   parser.add_argument('--prefix', type=str,
                       help='Two letter prefix to subset of PDB IDs to process',
                       default='10')
-  parser.add_argument('--force', dest='force', action='store_true',
+  parser.add_argument('--force', dest='force', action='store_true', default=False,
                       help='Forcibly overwrite fasta files that have already been written; otherwise skip')
-  parser.add_argument('--hmmer_input', dest='hmmer_input', action='store_true',
+  parser.add_argument('--hmmer_input', dest='hmmer_input', action='store_true', default=False,
                       help='Create single FASTA file to run domain-finding algorithm on')
+  parser.add_argument('--inflate_nonredundant', dest='inflate_nonredundant', action='store_true',
+                      help='Convert domain results from a nonredundant file to original sequence identifiers.')
+  parser.add_argument('--original_fasta', type=str,
+                      help='Full path to an original nonredundant FASTA file created by running ' +
+                           'create_fasta.py --hmmer_input')
+  parser.add_argument('--nr_results_file', type=str,
+                      help='Full path to a tab-delimited file containing domain results where the sequence ' +
+                           'identifier is a nonredundant ID')
+  parser.add_argument('--output_file', type=str,
+                      help='Full path to a file to write out the "inflated" (i.e., redundant) results')
   parser.add_argument('--distance', type=str,
                       help='How to record the distance between receptor and ligand?',
                       default='mindist',
                       choices={'mindist', 'fracin4', 'meandist', 'maxstd', 'meanstd', 'sumstd',
                                'maxvdw', 'meanvdw', 'sumvdw'})
-  parser.set_defaults(force=False)
-  parser.set_defaults(hmmer_input=False)
 
   args = parser.parse_args()
 
@@ -294,6 +350,17 @@ if __name__ == "__main__":
   if args.hmmer_input:
     create_hmmer_fasta_file(DATAPATH+'downloaded_data/annotations/', current_annotation_file)
     sys.exit(0)
+
+  if args.inflate_nonredundant:
+    if not (os.path.isfile(args.original_fasta) and
+            os.path.isfile(args.nr_results_file) and
+            args.output_file):
+      sys.stderr.write('Please specify the original fasta file, your nonredundant tab-delimited results file,\n' +
+                       'and desired output file as follows:\n' +
+                       'python create_fasta.py --inflate_nonredundant --original_fasta <path to file> ' +
+                       '--nr_results_file <path to file> --output_file <path to file>\n')
+      sys.exit(1)
+    inflate_nr_file(args.original_fasta, args.nr_results_file, args.output_file)
 
   # find the subset of PDB IDs to run on:
   subset_pdb_ids = set()

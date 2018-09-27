@@ -77,6 +77,15 @@ In our paper, we downloaded all [Pfam-A (version 31)](http://pfam.xfam.org) doma
 locally to find domain hits. General code to run this step of the pipeline can be found at 
 <https://github.com/Singh-Lab/run-hmmer>.
 
+* To transform the results obtained from this step to be reflective of original protein chain identifiers (rather than nonredundant identifiers), run:
+
+```bash
+python create_fasta.py --inflate_nonredundant
+                       --original_fasta processed_data/annotations/BioLiP_2018-09-12_nonredundant.fa
+                       --nr_results_file processed_data/annotations/BioLiP_2018-09-12-domains-pfam_v31-orig.tsv.gz
+                       --output_file processed_data/domains/BioLiP_2018-09-12-domains-pfam_v31.tsv.gz
+```
+
 * The output of these steps, run on BioLiP (version 2018-09-12) can be obtained by running:
  
 ```bash
