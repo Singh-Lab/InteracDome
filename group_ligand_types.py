@@ -169,80 +169,120 @@ def download_and_parse_hmdb(hmdb_path=DATAPATH+'hmdb/',
 
   # write to the output handle as we parse the files, 1 by 1:
   out_handle = gzip.open(outfile, 'w') if outfile.endswith('gz') else open(outfile, 'w')
-  out_handle.write('\n'.join(['# All information downloaded from the Human Metabolome Database (HMDB), version 3.6:',
+  out_handle.write('\n'.join(['# All information downloaded from the Human Metabolome Database (HMDB), version 4.0:',
                               '# http://www.hmdb.ca/system/downloads/current/hmdb_metabolites.zip',
                               '\t'.join(['#hmdb_id', 'metabolite_name', 'category', 'synonyms', 'iupac_name',
                                          'SMILES', 'InChI', 'InChIKey'])])+'\n')
 
   files_processed = 0
+
   # create an element tree parser:
-  rt = element_tree.parse(hmdb_path + 'hmdb_metabolites.xml').getroot()
-  for e in rt.findall('metabolite'):
+  for event, e in element_tree.iterparse(hmdb_path + 'hmdb_metabolites.xml',
+                                         events=('start', 'end', 'start-ns', 'end-ns')):
+    if event == 'start-ns':
+      prefix = '{'+e[1]+'}'
+    if event == 'end':
+      if e.tag == prefix+'metabolite':
 
-    # NOTE: we have to try/except because some entries have Unicode characters that are not included in
-    # basic ASCII (and cannot be written out) -- THIS is why we write directly instead of storing
+        # NOTE: we have to try/except because some entries have Unicode characters that are not included in
+        # basic ASCII (and cannot be written out) -- THIS is why we write directly instead of storing
 
-    try:  # hmdb_id
-      hmdb_id = ','.join(str(child.text).strip() for child in e.findall('.//accession')[:1])
-      out_handle.write(hmdb_id)
-    except:
-      out_handle.write('')
-
-    try:  # metabolite_name
-      name = ','.join(str(child.text).strip() for child in e.findall('.//name')[:1])
-      out_handle.write('\t' + name)
-    except:
-      out_handle.write('\t')
-
-    try:  # category
-      category = ','.join([','.join(str(child.text).strip().lower() for child in e.findall('.//class')[:1]),
-                           ','.join(str(child.text).strip().lower() for child in e.findall('.//origin'))])
-      out_handle.write('\t' + category)
-    except:
-      out_handle.write('\t')
-
-    try:  # synonyms
-      synonyms = [str(child.text).strip() for child in e.findall('.//synonym')]
-      out_handle.write('\t' + ','.join(sorted(list(set([a for a in synonyms if a != name])))))
-    except:
-      out_handle.write('\t')
-      i = 0
-      for l in sorted(list(set([a for a in synonyms if a != name]))):
-        try:
-          out_handle.write((',' if i > 0 else '') + l)
-          i += 1
+        try:  # hmdb_id
+          hmdb_id = ','.join(str(child.text).strip() for child in e.findall(prefix+'accession')[:1])
+          out_handle.write(hmdb_id)
         except:
-          pass
+          out_handle.write('')
 
-    try:  # iupac name
-      iupac = ','.join(str(child.text).strip() for child in e.findall('.//iupac_name')[:1])
-      out_handle.write('\t' + iupac)
-    except:
-      out_handle.write('\t')
+        try:  # metabolite_name
+          name = ','.join(str(child.text).strip() for child in e.findall(prefix+'name')[:1])
+          out_handle.write('\t' + name)
+        except:
+          out_handle.write('\t')
 
-    try:  # smiles string
-      smiles = ','.join(str(child.text).strip() for child in e.findall('.//smiles')[:1])
-      out_handle.write('\t' + smiles)
-    except:
-      out_handle.write('\t')
+        try:  # category
+          categories = []
+          for c2 in e:
+            if c2.tag == prefix+'taxonomy':
+              for child in c2:
+                if 'class' in child.tag:
+                  categories.append(child.text)
 
-    try:  # inchi
-      inchi = ','.join(str(child.text).strip() for child in e.findall('.//inchi')[:1]).replace('InChI=', '')
-      out_handle.write('\t' + inchi)
-    except:
-      out_handle.write('\t')
+          for child in e:
+            if child.tag == prefix + 'ontology':
+              for c2 in child:
+                if c2.tag == prefix + 'root':
+                  found_disposition = False
+                  found_source = False
+                  for c3 in c2:
+                    if c3.tag == prefix + 'term' and c3.text == 'Disposition':
+                      found_disposition = True
+                    if found_disposition and c3.tag == prefix + 'descendants':
+                      for c4 in c3:  # these are all "descendant"
+                        for c5 in c4:
+                          if c5.tag == prefix + 'term' and c5.text == 'Source':
+                            found_source = True
+                          if found_source and c5.tag == prefix + 'descendants':
+                            for c6 in c5:  # these are all "descendant"
+                              for c7 in c6:
+                                if c7.tag == prefix + 'term':
+                                  categories.append(c7.text)
+          out_handle.write('\t' + ','.join(sorted(list(set([str(a).strip().lower() for a in categories])))))
+        except:
+          out_handle.write('\t')
+          i = 0
+          for l in sorted(list(set([a for a in categories]))):
+            try:
+              out_handle.write((',' if i > 0 else '') + str(l).strip().lower())
+              i += 1
+            except:
+              pass
 
-    try:  # inchi key
-      inchikey = ','.join(str(child.text).strip() for child in e.findall('.//inchikey')[:1]).replace('InChIKey=', '')
-      out_handle.write('\t' + inchikey)
-    except:
-      out_handle.write('\t')
+        try:  # synonyms
+          synonyms = []
+          for c2 in e:
+            if c2.tag == prefix + 'synonyms':
+              synonyms += [str(child.text).strip() for child in c2]
+          out_handle.write('\t' + ','.join(sorted(list(set([a for a in synonyms if a != name])))))
+        except:
+          out_handle.write('\t')
+          i = 0
+          for l in sorted(list(set([a for a in synonyms if a != name]))):
+            try:
+              out_handle.write((',' if i > 0 else '') + l)
+              i += 1
+            except:
+              pass
 
-    out_handle.write('\n')
-    files_processed += 1
+        try:  # iupac name
+          iupac = ','.join(str(child.text).strip() for child in e.findall(prefix+'iupac_name')[:1])
+          out_handle.write('\t' + iupac)
+        except:
+          out_handle.write('\t')
+
+        try:  # smiles string
+          smiles = ','.join(str(child.text).strip() for child in e.findall(prefix+'smiles')[:1])
+          out_handle.write('\t' + smiles)
+        except:
+          out_handle.write('\t')
+
+        try:  # inchi
+          inchi = ','.join(str(child.text).strip() for child in e.findall(prefix+'inchi')[:1]).replace('InChI=', '')
+          out_handle.write('\t' + inchi)
+        except:
+          out_handle.write('\t')
+
+        try:  # inchi key
+          inchikey = ','.join(str(child.text).strip() for child in e.findall(prefix+'inchikey')[:1]).replace('InChIKey=', '')
+          out_handle.write('\t' + inchikey)
+        except:
+          out_handle.write('\t')
+
+        out_handle.write('\n')
+        files_processed += 1
 
   out_handle.close()
   sys.stderr.write('Processed information for '+"{:,}".format(files_processed)+' metabolites into '+outfile+'\n')
+  sys.exit(1)
 
 
 ########################################################################################################
@@ -618,13 +658,14 @@ def compare_ligands_to_alternate_molecules():
   # original ligand -> alternate ligand tanimoto coefficients should exist. Create them otherwise:
 
   # DrugBank information up-to-date?
-  drugbank_tanimoto_file = DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz'
-  drugbank_raw_data = DATAPATH + 'drugbank/drugbank-parsed.tsv'
-  drugbank_smiles_index = 3
-  check_inputs(drugbank_tanimoto_file, drugbank_raw_data, download_and_parse_drugbank, drugbank_smiles_index)
-  sys.exit(1)
+  #drugbank_tanimoto_file = DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz'
+  #drugbank_raw_data = DATAPATH + 'drugbank/drugbank-parsed.tsv'
+  #drugbank_smiles_index = 3
+  #check_inputs(drugbank_tanimoto_file, drugbank_raw_data, download_and_parse_drugbank, drugbank_smiles_index)
+  #sys.exit(1)
 
-  drug_group = similar_ligands(drugbank_tanimoto_file)
+  #drug_group = similar_ligands(drugbank_tanimoto_file)
+  drug_group = set()
 
   # HMDB information up-to-date?
   hmdb_tanimoto_file = DATAPATH+'hmdb/hmdb_tanimoto.tsv.gz'
@@ -715,5 +756,5 @@ def create_ligand_group_list(ligand_group_file=DATAPATH+'ligand_groups.txt'):
 
 if __name__ == "__main__":
 
-  final_outfile = DATAPATH+'ligand_groups.txt'
+  final_outfile = DATAPATH+'ligand_groups-20180925.txt'
   create_ligand_group_list(final_outfile)
