@@ -180,7 +180,10 @@ downloaded_data/ligand_groups.txt
  
 To repeat these steps to generate an up-to-date version of the file, the following script can be run 
 (this code likely requires additional configuration). You first need to install the command-line program 
-`babel` from <http://openbabel.org/wiki/Main_Page>.
+`babel` from <http://openbabel.org/wiki/Main_Page>. You will also need to manually download a file from DrugBank 
+(instructions will be printed to screen when you attempt to run the following script), but all other required input 
+files will be automatically downloaded as needed. You must have at least 8GB of space to download all required 
+files. The `downloaded_data/ligand_groups.txt` file was **last updated on September 26, 2018**.
 
 ```bash
 python group_ligand_types.py
