@@ -181,13 +181,20 @@ downloaded_data/ligand_groups.txt
 To repeat these steps to generate an up-to-date version of the file, the following script can be run 
 (this code likely requires additional configuration). You first need to install the command-line program 
 `babel` from <http://openbabel.org/wiki/Main_Page>. You will also need to manually download a file from DrugBank 
-(instructions will be printed to screen when you attempt to run the following script), but all other required input 
+(instructions will be printed to screen when you attempt to run the following), but all other required input 
 files will be automatically downloaded as needed. You must have at least 8GB of space to download all required 
 files. The `downloaded_data/ligand_groups.txt` file was **last updated on September 26, 2018**.
 
 ```bash
-python group_ligand_types.py
+python group_ligand_types.py --parse_raw --database hmdb
+python group_ligand_types.py --parse_raw --database drugbank
+python group_ligand_types.py --tanimoto --database hmdb --start 1 --end 27375
+python group_ligand_types.py --tanimoto --database drugbank --start 1 --end 27375
+python group_ligand_types.py --create_group_list --tanimoto_cutoff 0.9
 ```
+
+Calculating all-against-all pairwise Tanimoto coefficients can take a while, we suggest running this step in parallel
+on ~100 BioLiP ligands at a time (e.g., --start 1 --end 100, --start 101 --end 200, ...)
 
 ### Computing alternate binding propensity scores
 
