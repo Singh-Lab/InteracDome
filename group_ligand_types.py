@@ -485,7 +485,7 @@ def process_alternate_ligands(alt_ligand_file, smiles_string_index, all_alt_smil
 
 def calculate_tanimoto(alt_ligand_file, all_alt_smiles_file, all_alt_names_file, output_file,
                        orig_ligand_file=DATAPATH+'ccd/chemical_components_dictionary-parsed.tsv',
-                       orig_ligand_smiles_index=6, start=1, end=27374):
+                       orig_ligand_smiles_index=6, start=1, end=27375):
   """
   :param alt_ligand_file: full path to a tab-delimited file where one of the column values is a
                                 molecular structure SMILES string
@@ -506,7 +506,7 @@ def calculate_tanimoto(alt_ligand_file, all_alt_smiles_file, all_alt_names_file,
 
   # open and begin writing to output handle (header includes all file names and babel call)
   out_handle = gzip.open(output_file, 'w') if output_file.endswith('gz') else open(output_file)
-  out_handle.write('\n'.join(['# All-against-all Tanimoto coefficients calculated between SMILES strings found in:'
+  out_handle.write('\n'.join(['# All-against-all Tanimoto coefficients calculated between SMILES strings found in:',
                               '# (orig) '+orig_ligand_file,
                               '# (alt) '+alt_ligand_file,
                               '# by running from the command-line:',
@@ -567,7 +567,7 @@ def calculate_tanimoto(alt_ligand_file, all_alt_smiles_file, all_alt_names_file,
             tanimoto_index += 1
 
         call(['rm', tanimoto_file])
-        sys.stderr.write(str(orig_ligand_index) + '/27374\n')  # print progress
+        sys.stderr.write(str(orig_ligand_index) + '/27375\n')  # print progress
     orig_ligand_index += 1
 
     if orig_ligand_index > end:
@@ -792,7 +792,7 @@ if __name__ == "__main__":
                       help='Create an output file containing all information from ')
   parser.add_argument('--start', type=int, default=1,
                       help='Starting index (i.e., 1-index) of CCD ligand list to run babel on')
-  parser.add_argument('--end', type=int, default=27374,
+  parser.add_argument('--end', type=int, default=27375,
                       help='Ending index (i.e., 1-index) of CCD ligand list to run babel on')
   parser.add_argument('--tanimoto_cutoff', type=float, default=0.9,
                       help='Tanimoto cutoff between SMILES strings to consider two ligands "the same"')
@@ -869,12 +869,12 @@ if __name__ == "__main__":
     # (1) Make sure that Tanimoto coefficients have been properly calculated:
     for db in ['hmdb', 'drugbank']:
       if not os.path.isfile(DATAPATH+db+'/'+db+'_tanimoto.tsv.gz'):
-        sys.stderr.write('Could not find '+DATAPATH+'drugbank/'+db+'_tanimoto.tsv.gz\n' +
+        sys.stderr.write('Could not find '+DATAPATH+db+'/'+db+'_tanimoto.tsv.gz\n' +
                          'Please run: python group_ligand_types --tanimoto --database '+db+'\n' +
                          'OR (if you have already done this step): ' +
-                         'zcat ' + DATAPATH+'drugbank/'+db+'_tanimoto_*.tsv.gz > ' +
-                         DATAPATH+'drugbank/'+db+'_tanimoto.tsv; ' +
-                         'gzip '+DATAPATH+'drugbank/'+db+'_tanimoto.tsv\n')
+                         'zcat ' + DATAPATH+db+'/'+db+'_tanimoto_*.tsv.gz > ' +
+                         DATAPATH+db+'/'+db+'_tanimoto.tsv; ' +
+                         'gzip '+DATAPATH+db+'/'+db+'_tanimoto.tsv\n')
         sys.exit(1)
 
     # (2) Create the output file!
