@@ -570,6 +570,9 @@ def calculate_tanimoto(alt_ligand_file, all_alt_smiles_file, all_alt_names_file,
         sys.stderr.write(str(orig_ligand_index) + '/27374\n')  # print progress
     orig_ligand_index += 1
 
+    if orig_ligand_index > end:
+      break
+
   orig_ligand_handle.close()
 
   out_handle.close()
