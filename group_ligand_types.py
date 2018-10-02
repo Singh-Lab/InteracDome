@@ -788,7 +788,7 @@ if __name__ == "__main__":
                       help='Download and parse "raw" XML files from the given database')
   parser.add_argument('--tanimoto', dest='tanimoto', action='store_true', default=False,
                       help='Make all-against-all pairwise comparisons using the Tanimoto coefficient')
-  parser.add_argument('--create_group_list', dest='tanimoto', action='store_true', default=False,
+  parser.add_argument('--create_group_list', dest='create_group_list', action='store_true', default=False,
                       help='Create an output file containing all information from ')
   parser.add_argument('--start', type=int, default=1,
                       help='Starting index (i.e., 1-index) of CCD ligand list to run babel on')
