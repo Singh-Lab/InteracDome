@@ -650,7 +650,7 @@ def similar_ligands(tanimoto_files=(DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz'
         if tanimoto_coefficient >= tanimoto_cutoff and (not restriction_group or alt_id in restriction_group):
           ligand_group.add(ligand_id)
     except IOError:
-      pass
+      sys.stderr.write('Error reading '+tanimoto_file+'\n')
     tanimoto_handle.close()
 
   return ligand_group
