@@ -627,10 +627,10 @@ def check_inputs(tanimoto_file=DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz',
 
 ########################################################################################################
 
-def similar_ligands(tanimoto_file=DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz', tanimoto_cutoff=0.9,
+def similar_ligands(tanimoto_files=(DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz'), tanimoto_cutoff=0.9,
                     restriction_group=None):
   """
-  :param tanimoto_file: full path to a tab-delimited file containing ligand IDs, their alternate IDs,
+  :param tanimoto_files: full paths to tab-delimited files containing ligand IDs, their alternate IDs,
                         and their Tanimoto coefficients
   :param tanimoto_cutoff: float 0->1 specifying the minimum required Tanimoto coefficient to consider
   :param restriction_group: set of alternate ligand IDs to restrict results to
@@ -638,16 +638,17 @@ def similar_ligands(tanimoto_file=DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz', 
   """
 
   ligand_group = set()
-  tanimoto_handle = gzip.open(tanimoto_file) if tanimoto_file.endswith('gz') else open(tanimoto_file)
-  for tanimoto_line in tanimoto_handle:
-    if tanimoto_line.startswith('#'):
-      continue
+  for tanimoto_file in tanimoto_files:
+    tanimoto_handle = gzip.open(tanimoto_file) if tanimoto_file.endswith('gz') else open(tanimoto_file)
+    for tanimoto_line in tanimoto_handle:
+      if tanimoto_line.startswith('#'):
+        continue
 
-    ligand_id, _, _, alt_id, _, _, tanimoto_coefficient = tanimoto_line[:-1].split('\t')[:7]
+      ligand_id, _, _, alt_id, _, _, tanimoto_coefficient = tanimoto_line[:-1].split('\t')[:7]
 
-    if tanimoto_coefficient >= tanimoto_cutoff and (not restriction_group or alt_id in restriction_group):
-      ligand_group.add(ligand_id)
-  tanimoto_handle.close()
+      if tanimoto_coefficient >= tanimoto_cutoff and (not restriction_group or alt_id in restriction_group):
+        ligand_group.add(ligand_id)
+    tanimoto_handle.close()
 
   return ligand_group
 
@@ -669,26 +670,16 @@ def edit_ligand_name_string(ligand_name):
 
 ########################################################################################################
 
-def compare_ligands_to_alternate_molecules(tanimoto_cutoff=0.9):
+def compare_ligands_to_alternate_molecules(metabolite_infiles, drugbank_infiles, tanimoto_cutoff=0.9):
   """
   :return: 3 sets corresponding to mmCIF IDs that can be classified as DRUGLIKE_, METABOLITE_, or ION_
   """
 
-  # original ligand -> alternate ligand tanimoto coefficients should exist. Create them otherwise:
-
   # DrugBank information up-to-date?
-  drugbank_tanimoto_file = DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz'
-  # drugbank_raw_data = DATAPATH + 'drugbank/drugbank-parsed.tsv'
-  # drugbank_smiles_index = 3
-  # check_inputs(drugbank_tanimoto_file, drugbank_raw_data, download_and_parse_drugbank, drugbank_smiles_index)
-
-  drug_group = similar_ligands(drugbank_tanimoto_file, tanimoto_cutoff)
+  drug_group = similar_ligands(drugbank_infiles, tanimoto_cutoff)
 
   # HMDB information up-to-date?
-  hmdb_tanimoto_file = DATAPATH+'hmdb/hmdb_tanimoto.tsv.gz'
   hmdb_raw_data = DATAPATH+'hmdb/human_metabolome_database-parsed.tsv'
-  # hmdb_smiles_index = 5
-  # check_inputs(hmdb_tanimoto_file, hmdb_raw_data, download_and_parse_hmdb, hmdb_smiles_index)
 
   # Extract the subset of ENDOGENOUS human metabolites:
   allowed_ligand_ids = set()
@@ -703,7 +694,7 @@ def compare_ligands_to_alternate_molecules(tanimoto_cutoff=0.9):
       allowed_ligand_ids.add(ligand_id)
   hmdb_handle.close()
 
-  metabolite_group = similar_ligands(hmdb_tanimoto_file, tanimoto_cutoff, allowed_ligand_ids)
+  metabolite_group = similar_ligands(metabolite_infiles, tanimoto_cutoff, allowed_ligand_ids)
 
   # Finally, extract the ions:
   ion_group = set()
@@ -726,17 +717,22 @@ def compare_ligands_to_alternate_molecules(tanimoto_cutoff=0.9):
 
 ########################################################################################################
 
-def create_ligand_group_list(ligand_group_file=DATAPATH+'ligand_groups.txt', tanimoto_cutoff=0.9):
+def create_ligand_group_list(metabolite_infiles, drugbank_infiles,
+                             lig_grp_outfile=DATAPATH+'ligand_groups.txt', tanimoto_cutoff=0.9):
   """
-  :param ligand_group_file: full path to a file where a tab-delimited list of group names will be written
+  :param metabolite_infiles: list of full paths to tab-delimited files containing BioLiP->HMDB Tanimoto coeff.
+  :param drugbank_infiles: list of full paths to tab-delimited files containing BioLiP->DrugBank Tanimoto coeff.
+  :param lig_grp_outfile: full path to a file where a tab-delimited list of group names will be written
   :param tanimoto_cutoff: cutoff to determine whether mmCIF ligands matched another
   :return: None, but write to the output file a tab-delimited list of group names to mmCIF identifiers
   """
 
   # get the sets of drugs, metabolites, and ions from the corresponding downloaded files
-  drugs, metabolites, ions = compare_ligands_to_alternate_molecules(tanimoto_cutoff)
+  drugs, metabolites, ions = compare_ligands_to_alternate_molecules(metabolite_infiles,
+                                                                    drugbank_infiles,
+                                                                    tanimoto_cutoff)
 
-  out_handle = gzip.open(ligand_group_file, 'w') if ligand_group_file.endswith('gz') else open(ligand_group_file, 'w')
+  out_handle = gzip.open(lig_grp_outfile, 'w') if lig_grp_outfile.endswith('gz') else open(lig_grp_outfile, 'w')
   out_handle.write('\n'.join(['# Groupings of all ligands that may be found in the BioLiP structural database',
                               '# The 4 nucleic acids entries ("NUCACID_") include: ' +
                               'NUCDNA, NUCDNAB, NUCRNA, NUCRNAB',
@@ -768,7 +764,7 @@ def create_ligand_group_list(ligand_group_file=DATAPATH+'ligand_groups.txt', tan
     out_handle.write('DRUGLIKE_' + '\t' + bligand + '\n')
   out_handle.close()
 
-  sys.stderr.write('Wrote to '+ligand_group_file+'\n')
+  sys.stderr.write('Wrote to '+lig_grp_outfile+'\n')
 
 
 ########################################################################################################
@@ -867,16 +863,16 @@ if __name__ == "__main__":
   # Create a single file containing a list of groups and corresponding BioLiP ligands that fall into those groups
   elif args.create_group_list:
     # (1) Make sure that Tanimoto coefficients have been properly calculated:
+    dbinfiles = {}
     for db in ['hmdb', 'drugbank']:
-      if not os.path.isfile(DATAPATH+db+'/'+db+'_tanimoto.tsv.gz'):
-        sys.stderr.write('Could not find '+DATAPATH+db+'/'+db+'_tanimoto.tsv.gz\n' +
-                         'Please run: python group_ligand_types --tanimoto --database '+db+'\n' +
-                         'OR (if you have already done this step): ' +
-                         'zcat ' + DATAPATH+db+'/'+db+'_tanimoto_*.tsv.gz > ' +
-                         DATAPATH+db+'/'+db+'_tanimoto.tsv; ' +
-                         'gzip '+DATAPATH+db+'/'+db+'_tanimoto.tsv\n')
+      infiles = [f for f in os.listdir(DATAPATH+db) if f.startswith(db+'_tanimoto') and f.endswith('.tsv.gz')]
+      if len(infiles) < 1:
+        sys.stderr.write('Could not find '+DATAPATH+db+'/'+db+'_tanimoto*.tsv.gz\n' +
+                         'Please run: python group_ligand_types --tanimoto --database '+db+'\n')
         sys.exit(1)
+      dbinfiles[db] = infiles
 
     # (2) Create the output file!
-    create_ligand_group_list(DATAPATH + 'ligand_groups-20180925-'+str(args.tanimoto_cutoff)+'.txt',
+    create_ligand_group_list(dbinfiles['hmdb'], dbinfiles['drugbank'],
+                             DATAPATH + 'ligand_groups-20180925-'+str(args.tanimoto_cutoff)+'.txt',
                              args.tanimoto_cutoff)
