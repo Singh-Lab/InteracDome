@@ -640,14 +640,17 @@ def similar_ligands(tanimoto_files=(DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz'
   ligand_group = set()
   for tanimoto_file in tanimoto_files:
     tanimoto_handle = gzip.open(tanimoto_file) if tanimoto_file.endswith('gz') else open(tanimoto_file)
-    for tanimoto_line in tanimoto_handle:
-      if tanimoto_line.startswith('#'):
-        continue
+    try:
+      for tanimoto_line in tanimoto_handle:
+        if tanimoto_line.startswith('#'):
+          continue
 
-      ligand_id, _, _, alt_id, _, _, tanimoto_coefficient = tanimoto_line[:-1].split('\t')[:7]
+        ligand_id, _, _, alt_id, _, _, tanimoto_coefficient = tanimoto_line[:-1].split('\t')[:7]
 
-      if tanimoto_coefficient >= tanimoto_cutoff and (not restriction_group or alt_id in restriction_group):
-        ligand_group.add(ligand_id)
+        if tanimoto_coefficient >= tanimoto_cutoff and (not restriction_group or alt_id in restriction_group):
+          ligand_group.add(ligand_id)
+    except IOError:
+      pass
     tanimoto_handle.close()
 
   return ligand_group
