@@ -865,7 +865,8 @@ if __name__ == "__main__":
     # (1) Make sure that Tanimoto coefficients have been properly calculated:
     dbinfiles = {}
     for db in ['hmdb', 'drugbank']:
-      infiles = [f for f in os.listdir(DATAPATH+db) if f.startswith(db+'_tanimoto') and f.endswith('.tsv.gz')]
+      infiles = [DATAPATH+db+'/'+f for f in os.listdir(DATAPATH+db)
+                 if f.startswith(db+'_tanimoto') and f.endswith('.tsv.gz')]
       if len(infiles) < 1:
         sys.stderr.write('Could not find '+DATAPATH+db+'/'+db+'_tanimoto*.tsv.gz\n' +
                          'Please run: python group_ligand_types --tanimoto --database '+db+'\n')
