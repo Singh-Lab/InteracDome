@@ -627,13 +627,14 @@ def check_inputs(tanimoto_file=DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz',
 
 ########################################################################################################
 
-def similar_ligands(tanimoto_files=(DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz'), tanimoto_cutoff=0.9,
-                    restriction_group=None):
+def similar_ligands(tanimoto_files=(DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz',), tanimoto_cutoff=0.9,
+                    restriction_group=None, total_processed=0):
   """
   :param tanimoto_files: full paths to tab-delimited files containing ligand IDs, their alternate IDs,
                         and their Tanimoto coefficients
   :param tanimoto_cutoff: float 0->1 specifying the minimum required Tanimoto coefficient to consider
   :param restriction_group: set of alternate ligand IDs to restrict results to
+  :param total_processed: int corresponding to the number of lines we have processed so far
   :return: a set of original ligand IDs that passed the Tanimoto cutoff
   """
 
@@ -649,11 +650,15 @@ def similar_ligands(tanimoto_files=(DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz'
 
         if tanimoto_coefficient >= tanimoto_cutoff and (not restriction_group or alt_id in restriction_group):
           ligand_group.add(ligand_id)
+
+        total_processed += 1
+        if total_processed % 1000000 == 0:
+          sys.stderr.write('Processed '+"{:,}".format(total_processed)+' lines\n')
     except IOError:
       sys.stderr.write('Error reading '+tanimoto_file+'\n')
     tanimoto_handle.close()
 
-  return ligand_group
+  return ligand_group, total_processed
 
 
 ########################################################################################################
@@ -679,7 +684,7 @@ def compare_ligands_to_alternate_molecules(metabolite_infiles, drugbank_infiles,
   """
 
   # DrugBank information up-to-date?
-  drug_group = similar_ligands(drugbank_infiles, tanimoto_cutoff)
+  drug_group, total_processed = similar_ligands(drugbank_infiles, tanimoto_cutoff)
 
   # HMDB information up-to-date?
   hmdb_raw_data = DATAPATH+'hmdb/human_metabolome_database-parsed.tsv'
@@ -697,7 +702,7 @@ def compare_ligands_to_alternate_molecules(metabolite_infiles, drugbank_infiles,
       allowed_ligand_ids.add(ligand_id)
   hmdb_handle.close()
 
-  metabolite_group = similar_ligands(metabolite_infiles, tanimoto_cutoff, allowed_ligand_ids)
+  metabolite_group = similar_ligands(metabolite_infiles, tanimoto_cutoff, allowed_ligand_ids, total_processed)
 
   # Finally, extract the ions:
   ion_group = set()
