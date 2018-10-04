@@ -703,7 +703,8 @@ def compare_ligands_to_alternate_molecules(metabolite_infiles, drugbank_infiles,
       allowed_ligand_ids.add(ligand_id)
   hmdb_handle.close()
 
-  metabolite_group = similar_ligands(metabolite_infiles, tanimoto_cutoff, allowed_ligand_ids, total_processed)
+  metabolite_group, _ = similar_ligands(metabolite_infiles, tanimoto_cutoff, allowed_ligand_ids,
+                                                      total_processed)
 
   # Finally, extract the ions:
   ion_group = set()
