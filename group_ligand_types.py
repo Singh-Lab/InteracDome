@@ -501,7 +501,8 @@ def calculate_tanimoto(alt_ligand_file, all_alt_smiles_file, all_alt_names_file,
 
   # Go through the alternate ligand->SMILES file, and keep an ordered list of molecular IDs, names, and SMILES strings
   alt_names_handle = gzip.open(all_alt_names_file) if all_alt_names_file.endswith('gz') else open(all_alt_names_file)
-  alt_ligands = [lig_info.strip().split('\t')[:3] for lig_info in alt_names_handle]
+  alt_ligands = [lig_info.strip().split('\t')[:3] for lig_info in alt_names_handle
+                 if len(lig_info.strip().split('\t')) > 2]
   alt_names_handle.close()
 
   # open and begin writing to output handle (header includes all file names and babel call)
@@ -652,7 +653,7 @@ def similar_ligands(tanimoto_files=(DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz'
           ligand_group.add(ligand_id)
 
         total_processed += 1
-        if total_processed % 1000000 == 0:
+        if total_processed % 100000 == 0:
           sys.stderr.write('Processed '+"{:,}".format(total_processed)+' lines\n')
     except IOError:
       sys.stderr.write('Error reading '+tanimoto_file+'\n')
@@ -710,10 +711,11 @@ def compare_ligands_to_alternate_molecules(metabolite_infiles, drugbank_infiles,
   ligand_raw_data = DATAPATH+'ccd/chemical_components_dictionary-parsed.tsv'
   ligand_handle = gzip.open(ligand_raw_data) if ligand_raw_data.endswith('gz') else open(ligand_raw_data)
   for ligand_line in ligand_handle:
-
     # lowercase and remove comma separators from the ligand name and the list of synonyms
-    ligand_id, ligand_name, ligand_synonyms = map(lambda x: x.lower().replace(',', ' '),
-                                                  ligand_line[:-1].split('\t')[:3])
+    if len(ligand_line[:-1].split('\t')) < 3:
+      continue
+
+    ligand_id, ligand_name, ligand_synonyms = [s.lower().replace(',', '') for s in ligand_line[:-1].split('\t')[:3]]
     descriptor = ligand_name.split() + ligand_synonyms.split()  # each word becomes a separate entry
 
     if 'ion' in [edit_ligand_name_string(ligand_word) for ligand_word in descriptor]:
