@@ -649,7 +649,7 @@ def similar_ligands(tanimoto_files=(DATAPATH+'drugbank/drugbank_tanimoto.tsv.gz'
 
         ligand_id, _, _, alt_id, _, _, tanimoto_coefficient = tanimoto_line[:-1].split('\t')[:7]
 
-        if tanimoto_coefficient >= tanimoto_cutoff and (not restriction_group or alt_id in restriction_group):
+        if float(tanimoto_coefficient) >= tanimoto_cutoff and (not restriction_group or alt_id in restriction_group):
           ligand_group.add(ligand_id)
 
         total_processed += 1
@@ -704,7 +704,7 @@ def compare_ligands_to_alternate_molecules(metabolite_infiles, drugbank_infiles,
   hmdb_handle.close()
 
   metabolite_group, _ = similar_ligands(metabolite_infiles, tanimoto_cutoff, allowed_ligand_ids,
-                                                      total_processed)
+                                        total_processed)
 
   # Finally, extract the ions:
   ion_group = set()
@@ -720,7 +720,7 @@ def compare_ligands_to_alternate_molecules(metabolite_infiles, drugbank_infiles,
     descriptor = ligand_name.split() + ligand_synonyms.split()  # each word becomes a separate entry
 
     if 'ion' in [edit_ligand_name_string(ligand_word) for ligand_word in descriptor]:
-      ion_group.add(ligand_id)
+      ion_group.add(ligand_id.upper())
   ligand_handle.close()
 
   return drug_group, metabolite_group, ion_group
