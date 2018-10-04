@@ -712,7 +712,7 @@ def compare_ligands_to_alternate_molecules(metabolite_infiles, drugbank_infiles,
   ligand_handle = gzip.open(ligand_raw_data) if ligand_raw_data.endswith('gz') else open(ligand_raw_data)
   for ligand_line in ligand_handle:
     # lowercase and remove comma separators from the ligand name and the list of synonyms
-    if len(ligand_line[:-1].split('\t')) < 3:
+    if ligand_line.startswith('#') or len(ligand_line[:-1].split('\t')) < 3:
       continue
 
     ligand_id, ligand_name, ligand_synonyms = [s.lower().replace(',', '') for s in ligand_line[:-1].split('\t')[:3]]
