@@ -15,6 +15,7 @@ import os
 import sys
 import gzip
 import argparse
+import string
 from subprocess import call, check_output, Popen, PIPE
 from difflib import SequenceMatcher
 
@@ -503,7 +504,13 @@ def find_closest_chain(pdb_id, pdb_chains, domain_location, ligand_type, distanc
                             (-1 if distance == 'mindist' else 1)*sum(pos_to_dist.values()),  # maximize this value
                             -1*all_chains.index(chain_id)))  # inverse of the chain ID ('A', 'B', 'C') -> (0, -1, -2)
 
-  return all_chains[-1*sorted(total_proximity, reverse=True)[0][2]]
+  # NOTE: it IS possible that there are NO positions across ANY chains that are <= PROXIMITY_CUTOFF to the ligand
+  # in these cases, all_chains will be empty, and we will not be able to return a proper chain. We return a -1.
+
+  try:
+    return all_chains[-1*sorted(total_proximity, reverse=True)[0][2]]
+  except IndexError:
+    return -1
 
 
 ########################################################################################################
@@ -559,12 +566,15 @@ def clear_crystal_duplicates(alignment_file, ligand_type, distance):
             all_seqs[current_seq] = set()
           all_seqs[current_seq].add(chain)
 
+        # only if the chains have identical sequences do we need to pick one representative:
         for new_chains in all_seqs.values():
-          # now, we should pick the closest:
+          # now, we should pick the closest, remembering that some chains will not be included AT ALL
           if len(new_chains) > 1:
             # we want to pick the CLOSEST chain when there are multiple chains in contact with the ligand
-            unique_seq_ids.append(pdb_id + find_closest_chain(pdb_id, new_chains, dom_loc,
-                                                              ligand_type, distance) + '_' + dom_loc)
+            closest_chain = find_closest_chain(pdb_id, new_chains, dom_loc, ligand_type, distance)
+            if closest_chain not in string.ascii_uppercase:
+              closest_chain = new_chains[0]  # randomly pick the first, this will be discarded anyway in the end...
+            unique_seq_ids.append(pdb_id + closest_chain + '_' + dom_loc)
 
           # otherwise, add each "unique" domain (i.e., unique sequence, but same location):
           else:
