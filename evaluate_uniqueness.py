@@ -572,7 +572,7 @@ def clear_crystal_duplicates(alignment_file, ligand_type, distance):
           if len(new_chains) > 1:
             # we want to pick the CLOSEST chain when there are multiple chains in contact with the ligand
             closest_chain = find_closest_chain(pdb_id, new_chains, dom_loc, ligand_type, distance)
-            if closest_chain not in string.ascii_uppercase:
+            if closest_chain not in list(string.ascii_uppercase):
               closest_chain = new_chains[0]  # randomly pick the first, this will be discarded anyway in the end...
             unique_seq_ids.append(pdb_id + closest_chain + '_' + dom_loc)
 
