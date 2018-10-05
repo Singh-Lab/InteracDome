@@ -225,14 +225,14 @@ def create_alignment_files(domain_file, fasta_dir, alignment_dir, distance='mind
   """
 
   # confirm that the directories we are interested in exist
-  for current_dir in [fasta_dir, alignment_dir]:
-    if not os.path.isdir(alignment_dir):
-      sys.stderr.write('Could not find directory ' + str(current_dir) + '\n')
-      sys.exit(1)
+  if not os.path.isdir(fasta_dir):
+    sys.stderr.write('Could not find directory ' + str(fasta_dir) + '\n')
+    sys.exit(1)
 
   # create the output directory if need be
-  if not os.path.isdir(alignment_dir + distance):
-    call(['mkdir', alignment_dir + distance])
+  for current_dir in [alignment_dir, alignment_dir + distance]:
+    if not os.path.isdir(current_dir):
+      call(['mkdir', current_dir])
 
   ligand_to_group = ligand_groups()  # mapping of ligand ID -> super group
 
