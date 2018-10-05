@@ -32,7 +32,7 @@ PROXIMITY_CUTOFF = 3.6  # cutoff (in Angstroms) to consider an atom-to-atom dist
 
 # full path to a tab-delimited file with columns PDB ID-PDB Chain, Domain Name (unique), and
 #  comma-delimited list of (1-indexed domain match state : 0-indexed sequence position : amino acid value)
-DOMAINS = DATAPATH+'processed_data/domains/BioLiP_2017-06-28-domains-pfam_v31.tsv.gz'
+DOMAINS = DATAPATH+'processed_data/domains/BioLiP_2018-09-12-domains-pfam_v31.tsv.gz'
 
 
 ########################################################################################################
