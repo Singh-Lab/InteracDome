@@ -522,12 +522,15 @@ def clear_crystal_duplicates(alignment_file, ligand_type, distance):
            to biological assemblies (there can be many different ones specified for the same structure).
            For each domain--ligand pair, we only consider sets of unique (PDB ID [no chain], ligand type, sequence)
            before evaluating uniqueness; we select the identical chain that is closest to the ligand.
+           NOTE: we ALSO exclude ALL chains that do not have AT LEAST ONE POSITION within proximity_cutoff to
+                 the ligand of interest!
   """
 
   unique_domhits = {}
   seqid_to_sequence = {}  # sequence ID (PDB ID, PDB Chain, start index, end index) -> string of complete sequence
   current_seq_id = ''  # keep track of the current sequence ID (while parsing the multiple alignment file)
 
+  # first, read in all the sequences:
   fasta_handle = gzip.open(alignment_file) if alignment_file.endswith('gz') else open(alignment_file)
   for aln_line in fasta_handle:
     if aln_line.startswith('>'):
@@ -547,6 +550,7 @@ def clear_crystal_duplicates(alignment_file, ligand_type, distance):
       seqid_to_sequence[current_seq_id].append(aln_line.strip())  # sequence without newlines
   fasta_handle.close()
 
+  # concatenate sequences into single strings without newlines
   for sequence_id in seqid_to_sequence.keys():
     seqid_to_sequence[sequence_id] = ''.join(seqid_to_sequence[sequence_id])
 
@@ -566,22 +570,24 @@ def clear_crystal_duplicates(alignment_file, ligand_type, distance):
             all_seqs[current_seq] = set()
           all_seqs[current_seq].add(chain)
 
-        # only if the chains have identical sequences do we need to pick one representative:
+        # if chains have identical sequences, we need to pick one representative:
         for new_chains in all_seqs.values():
-          # now, we should pick the closest, remembering that some chains will not be included AT ALL
           if len(new_chains) > 1:
             # we want to pick the CLOSEST chain when there are multiple chains in contact with the ligand
             closest_chain = find_closest_chain(pdb_id, new_chains, dom_loc, ligand_type, distance)
-            if closest_chain not in list(string.ascii_uppercase):
-              closest_chain = sorted(list(new_chains))[0]  # randomly pick the first, this will be discarded anyway in the end...
-            unique_seq_ids.append(pdb_id + closest_chain + '_' + dom_loc)
+            if closest_chain in list(string.ascii_uppercase):
+              unique_seq_ids.append(pdb_id + closest_chain + '_' + dom_loc)
 
           # otherwise, add each "unique" domain (i.e., unique sequence, but same location):
           else:
-            unique_seq_ids.append(pdb_id + sorted(list(new_chains))[0] + '_' + dom_loc)
+            closest_chain = find_closest_chain(pdb_id, new_chains, dom_loc, ligand_type, distance)
+            if closest_chain in list(string.ascii_uppercase):
+              unique_seq_ids.append(pdb_id + closest_chain + '_' + dom_loc)
 
       else:
-        unique_seq_ids.append(pdb_id + sorted(list(chains))[0] + '_' + dom_loc)
+        closest_chain = find_closest_chain(pdb_id, chains, dom_loc, ligand_type, distance)
+        if closest_chain in list(string.ascii_uppercase):
+          unique_seq_ids.append(pdb_id + closest_chain + '_' + dom_loc)
 
   return {seq_id: seq for seq_id, seq in seqid_to_sequence.items() if seq_id in unique_seq_ids}, \
          set([seq_id for seq_id in seqid_to_sequence.keys() if seq_id not in unique_seq_ids])
@@ -600,9 +606,12 @@ def overall_alignment_score(alignment_file, ligand_type, distance):
   seqid_to_sequence, missing_seqids = clear_crystal_duplicates(alignment_file, ligand_type, distance)
 
   # make sure that the sequences in this alignment are all the same length
-  assert len(set([len(seq) for seq in seqid_to_sequence.values()])) == 1, "Varying sequence lengths in "+alignment_file
+  if len(seqid_to_sequence.keys()) > 0:
+    assert len(set([len(seq) for seq in seqid_to_sequence.values()])) == 1, "Varying sequence lengths in "+alignment_file
 
-  return henikoff_alignment_score(seqid_to_sequence)
+    return henikoff_alignment_score(seqid_to_sequence)
+  else:
+    return list(), list()  # sorted list of sequence IDs, per-sequence summed column scores
 
 
 ########################################################################################################
@@ -665,7 +674,8 @@ def generate_uniqueness_scores(domain_names, ligand_types, alignment_files, outp
 
     # PDB ID -> unnormalized uniqueness score
     ordered_seqids, seqid_to_score = overall_alignment_score(curr_aln_file, ligand_type, distance)
-    relative_scores = normalize_scores(seqid_to_score)  # relative scores
+
+    relative_scores = normalize_scores(seqid_to_score) if len(seqid_to_score) > 0 else list()  # relative scores
 
     # write the new line out to file (domain name, ligand type, number of instances, sequence_id:relative_weight,...)
     all_uniqueness_scores.append('\t'.join([str(domain_names[curr_ind]), str(ligand_types[curr_ind]),
