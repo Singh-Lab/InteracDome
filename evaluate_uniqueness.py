@@ -462,7 +462,7 @@ def find_closest_chain(pdb_id, pdb_chains, domain_location, ligand_type, distanc
     return sorted(pdb_chains)[0]
 
   chain_proximity = {}
-  distance_handle = open(distance_fasta)
+  distance_handle = gzip.open(distance_fasta) if distance_fasta.endswith('gz') else open(distance_fasta)
   for dist_line in distance_handle:
     print dist_line
     print pdb_id
