@@ -463,16 +463,11 @@ def find_closest_chain(pdb_id, pdb_chains, domain_location, ligand_type, distanc
 
   chain_proximity = {}
   distance_handle = gzip.open(distance_fasta) if distance_fasta.endswith('gz') else open(distance_fasta)
-  print distance_fasta
   for dist_line in distance_handle:
-    print dist_line
-    print pdb_id
     if dist_line.startswith('>'+pdb_id):
       current_chain = dist_line[len('>' + pdb_id):len('>' + pdb_id) + 1]
-      print current_chain
       if current_chain not in pdb_chains:
         continue
-      sys.exit(1)
 
       if current_chain not in chain_proximity:
         chain_proximity[current_chain] = {}  # aa position -> distance to ligand (within PROXIMITY_CUTOFF angstroms)
