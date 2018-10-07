@@ -29,7 +29,7 @@ PROXIMITY_CUTOFF = 3.6  # cutoff (in Angstroms) to consider an atom-to-atom dist
 
 # full path to a tab-delimited file with columns PDB ID-PDB Chain, Domain Name (unique), and
 #  comma-delimited list of (1-indexed domain match state : 0-indexed sequence position : amino acid value)
-DOMAINS = DATAPATH+'processed_data/domains/BioLiP_2017-06-28-domains-pfam_v31.tsv.gz'
+DOMAINS = DATAPATH+'processed_data/domains/BioLiP_2018-09-12-domains-pfam_v31.tsv.gz'
 
 
 ########################################################################################################
@@ -140,6 +140,9 @@ def process_uniqueness_file(uniqueness_file):
       continue
 
     domain_name, ligand_type, number_instances, seq_to_uniqueness = weight_line[:-1].split('\t')[:4]
+
+    if float(number_instances) < 1:
+      continue
 
     if domain_name not in uniqueness:
       uniqueness[domain_name] = {}
@@ -299,7 +302,7 @@ def create_binding_scores(uniqueness_file, fasta_dir, alignment_dir, binding_sco
     ligand_mapping = ligand_groups()
 
     for pdbid in [pdbid_pdbchain[:4] for pdbid_pdbchain in all_matching_pdbids]:
-      fasta_file = fasta_dir + pdbid[0] + '/' + pdbid[:2] + '/' + pdbid + '_' + distance + '.fa'
+      fasta_file = fasta_dir + pdbid[0] + '/' + pdbid[:2] + '/' + pdbid + '_' + distance + '.fa.gz'
 
       if not os.path.isfile(fasta_file):
         sys.stderr.write('No such file: '+fasta_file+'\n')
