@@ -577,13 +577,11 @@ def clear_crystal_duplicates(alignment_file, ligand_type, distance):
         for new_chains in all_seqs.values():
           # we want to pick the CLOSEST chain when there are multiple chains in contact with the ligand
           closest_chain = find_closest_chain(pdb_id, new_chains, dom_loc, ligand_type, distance)
-          print closest_chain
           if closest_chain in list(string.ascii_uppercase):
             unique_seq_ids.append(pdb_id + closest_chain + '_' + dom_loc)
 
       else:
         closest_chain = find_closest_chain(pdb_id, chains, dom_loc, ligand_type, distance)
-        print closest_chain
         if closest_chain in list(string.ascii_uppercase):
           unique_seq_ids.append(pdb_id + closest_chain + '_' + dom_loc)
 
