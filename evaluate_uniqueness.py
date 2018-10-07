@@ -464,13 +464,15 @@ def find_closest_chain(pdb_id, pdb_chains, domain_location, ligand_type, distanc
   chain_proximity = {}
   distance_handle = open(distance_fasta)
   for dist_line in distance_handle:
-    if dist_line.startswith('>'+pdb_id) and dist_line[len('>'+pdb_id):len('>'+pdb_id)+1] in pdb_chains:
+    if dist_line.startswith('>'+pdb_id):
+      current_chain = dist_line[len('>' + pdb_id):len('>' + pdb_id) + 1]
+      if current_chain not in pdb_chains:
+        continue
 
-      current_chain = dist_line[len('>'+pdb_id):len('>'+pdb_id)+1]
       if current_chain not in chain_proximity:
-        chain_proximity[current_chain] = {}  # aa position -> distance to ligand (within 5 angstroms)
+        chain_proximity[current_chain] = {}  # aa position -> distance to ligand (within PROXIMITY_CUTOFF angstroms)
 
-      curr_bind_pos = dist_line[dist_line.find('bindingSiteRes=') + 15:dist_line.rfind(';')].split(',')
+      curr_bind_pos = dist_line[dist_line.find('bindingSiteRes=')+15:dist_line.rfind(';')].split(',')
       curr_bind_pos = [entry.split('-') for entry in curr_bind_pos]
 
       for (aapos, current_ligand, binding_score) in curr_bind_pos:
@@ -482,8 +484,10 @@ def find_closest_chain(pdb_id, pdb_chains, domain_location, ligand_type, distanc
         # translate all names of the ligands (if need be):
         super_groups = [translate_ligand(orig_ligand_name) for orig_ligand_name in super_groups]
 
-        # if we are looking at the correct ligand type and this position is within the domain range we want:
+        # if we are looking at the correct ligand type AND this position is within the domain range we want:
         if ligand_type in super_groups and aapos in index_range:
+
+          # and if this position is considered to be a "binding residue"
           if (distance == 'mindist' and float(binding_score) <= PROXIMITY_CUTOFF) or \
              (distance != 'mindist' and float(binding_score) >= PROXIMITY_CUTOFF):
             if aapos not in chain_proximity[current_chain]:
@@ -507,10 +511,9 @@ def find_closest_chain(pdb_id, pdb_chains, domain_location, ligand_type, distanc
   # NOTE: it IS possible that there are NO positions across ANY chains that are <= PROXIMITY_CUTOFF to the ligand
   # in these cases, all_chains will be empty, and we will not be able to return a proper chain. We return a -1.
 
-  try:
+  if len(chain_proximity.keys()) > 0:
     return all_chains[-1*sorted(total_proximity, reverse=True)[0][2]]
-  except IndexError:
-    return -1
+  return -1  # no chains had a position within PROXIMITY_CUTOFF of the ligand...
 
 
 ########################################################################################################
@@ -560,7 +563,7 @@ def clear_crystal_duplicates(alignment_file, ligand_type, distance):
   for pdb_id in unique_domhits.keys():
     for dom_loc, chains in unique_domhits[pdb_id].items():
 
-      if len(chains) > 1:
+      if len(chains) > 1:  # if there are multiple chains with a domain in the exact same location
 
         # ONLY in this case do we bother checking the sequence itself:
         all_seqs = {}
@@ -570,15 +573,17 @@ def clear_crystal_duplicates(alignment_file, ligand_type, distance):
             all_seqs[current_seq] = set()
           all_seqs[current_seq].add(chain)
 
-        # if chains have identical sequences, we need to pick one representative:
+        # for each set of chains corresponding to identical sequences, we need to pick one representative:
         for new_chains in all_seqs.values():
           # we want to pick the CLOSEST chain when there are multiple chains in contact with the ligand
           closest_chain = find_closest_chain(pdb_id, new_chains, dom_loc, ligand_type, distance)
+          print closest_chain
           if closest_chain in list(string.ascii_uppercase):
             unique_seq_ids.append(pdb_id + closest_chain + '_' + dom_loc)
 
       else:
         closest_chain = find_closest_chain(pdb_id, chains, dom_loc, ligand_type, distance)
+        print closest_chain
         if closest_chain in list(string.ascii_uppercase):
           unique_seq_ids.append(pdb_id + closest_chain + '_' + dom_loc)
 
@@ -600,12 +605,11 @@ def overall_alignment_score(alignment_file, ligand_type, distance):
 
   # make sure that the sequences in this alignment are all the same length
   if len(seqid_to_sequence.keys()) > 0:
-    print 'YAY!'
     assert len(set([len(seq) for seq in seqid_to_sequence.values()])) == 1, "Varying sequence lengths in "+alignment_file
 
     return henikoff_alignment_score(seqid_to_sequence)
   else:
-    return list(), list()  # sorted list of sequence IDs, per-sequence summed column scores
+    return [], []  # sorted list of sequence IDs, per-sequence summed column scores
 
 
 ########################################################################################################
@@ -653,7 +657,7 @@ def generate_uniqueness_scores(domain_names, ligand_types, alignment_files, outp
   all_uniqueness_scores = []
 
   # calculate scores for each alignment file
-  for curr_ind, curr_aln_file in enumerate(alignment_files[:200]):
+  for curr_ind, curr_aln_file in enumerate(alignment_files[:500]):
 
     for progress_percent, progress_value in progress_bars:
       if curr_ind > progress_value:
@@ -672,8 +676,9 @@ def generate_uniqueness_scores(domain_names, ligand_types, alignment_files, outp
     relative_scores = normalize_scores(seqid_to_score)  # relative scores
 
     # write the new line out to file (domain name, ligand type, number of instances, sequence_id:relative_weight,...)
-    all_uniqueness_scores.append('\t'.join([str(domain_names[curr_ind]), str(ligand_types[curr_ind]),
-                                            str(len(ordered_seqids)),
+    all_uniqueness_scores.append('\t'.join([str(domain_names[curr_ind]),  # domain name
+                                            str(ligand_types[curr_ind]),  # ligand type
+                                            str(len(ordered_seqids)),  # number of instances
                                             ','.join(str(ordered_seqids[curr_id])+':'+str(relative_scores[curr_id])
                                                      for curr_id in xrange(len(ordered_seqids)))])+'\n')
 
