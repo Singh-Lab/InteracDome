@@ -485,7 +485,7 @@ def find_closest_chain(pdb_id, pdb_chains, domain_location, ligand_type, distanc
         # if we are looking at the correct ligand type and this position is within the domain range we want:
         if ligand_type in super_groups and aapos in index_range:
           if (distance == 'mindist' and float(binding_score) <= PROXIMITY_CUTOFF) or \
-              (distance != 'mindist' and float(binding_score) >= PROXIMITY_CUTOFF):
+             (distance != 'mindist' and float(binding_score) >= PROXIMITY_CUTOFF):
             if aapos not in chain_proximity[current_chain]:
               chain_proximity[current_chain][aapos] = float(binding_score)
 
@@ -572,17 +572,10 @@ def clear_crystal_duplicates(alignment_file, ligand_type, distance):
 
         # if chains have identical sequences, we need to pick one representative:
         for new_chains in all_seqs.values():
-          if len(new_chains) > 1:
-            # we want to pick the CLOSEST chain when there are multiple chains in contact with the ligand
-            closest_chain = find_closest_chain(pdb_id, new_chains, dom_loc, ligand_type, distance)
-            if closest_chain in list(string.ascii_uppercase):
-              unique_seq_ids.append(pdb_id + closest_chain + '_' + dom_loc)
-
-          # otherwise, add each "unique" domain (i.e., unique sequence, but same location):
-          else:
-            closest_chain = find_closest_chain(pdb_id, new_chains, dom_loc, ligand_type, distance)
-            if closest_chain in list(string.ascii_uppercase):
-              unique_seq_ids.append(pdb_id + closest_chain + '_' + dom_loc)
+          # we want to pick the CLOSEST chain when there are multiple chains in contact with the ligand
+          closest_chain = find_closest_chain(pdb_id, new_chains, dom_loc, ligand_type, distance)
+          if closest_chain in list(string.ascii_uppercase):
+            unique_seq_ids.append(pdb_id + closest_chain + '_' + dom_loc)
 
       else:
         closest_chain = find_closest_chain(pdb_id, chains, dom_loc, ligand_type, distance)
@@ -607,6 +600,7 @@ def overall_alignment_score(alignment_file, ligand_type, distance):
 
   # make sure that the sequences in this alignment are all the same length
   if len(seqid_to_sequence.keys()) > 0:
+    print 'YAY!'
     assert len(set([len(seq) for seq in seqid_to_sequence.values()])) == 1, "Varying sequence lengths in "+alignment_file
 
     return henikoff_alignment_score(seqid_to_sequence)
@@ -659,7 +653,7 @@ def generate_uniqueness_scores(domain_names, ligand_types, alignment_files, outp
   all_uniqueness_scores = []
 
   # calculate scores for each alignment file
-  for curr_ind, curr_aln_file in enumerate(alignment_files):
+  for curr_ind, curr_aln_file in enumerate(alignment_files[:200]):
 
     for progress_percent, progress_value in progress_bars:
       if curr_ind > progress_value:
@@ -675,7 +669,7 @@ def generate_uniqueness_scores(domain_names, ligand_types, alignment_files, outp
     # PDB ID -> unnormalized uniqueness score
     ordered_seqids, seqid_to_score = overall_alignment_score(curr_aln_file, ligand_type, distance)
 
-    relative_scores = normalize_scores(seqid_to_score) if len(seqid_to_score) > 0 else list()  # relative scores
+    relative_scores = normalize_scores(seqid_to_score)  # relative scores
 
     # write the new line out to file (domain name, ligand type, number of instances, sequence_id:relative_weight,...)
     all_uniqueness_scores.append('\t'.join([str(domain_names[curr_ind]), str(ligand_types[curr_ind]),
