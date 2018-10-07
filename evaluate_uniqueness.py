@@ -466,9 +466,9 @@ def find_closest_chain(pdb_id, pdb_chains, domain_location, ligand_type, distanc
   for dist_line in distance_handle:
     if dist_line.startswith('>'+pdb_id):
       current_chain = dist_line[len('>' + pdb_id):len('>' + pdb_id) + 1]
+      print current_chain
       if current_chain not in pdb_chains:
         continue
-      print current_chain
       sys.exit(1)
 
       if current_chain not in chain_proximity:
