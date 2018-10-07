@@ -655,7 +655,7 @@ def generate_uniqueness_scores(domain_names, ligand_types, alignment_files, outp
   all_uniqueness_scores = []
 
   # calculate scores for each alignment file
-  for curr_ind, curr_aln_file in enumerate(alignment_files[:200]):
+  for curr_ind, curr_aln_file in enumerate(alignment_files[:100]):
 
     for progress_percent, progress_value in progress_bars:
       if curr_ind > progress_value:
