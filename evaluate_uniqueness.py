@@ -468,6 +468,8 @@ def find_closest_chain(pdb_id, pdb_chains, domain_location, ligand_type, distanc
       current_chain = dist_line[len('>' + pdb_id):len('>' + pdb_id) + 1]
       if current_chain not in pdb_chains:
         continue
+      print current_chain
+      sys.exit(1)
 
       if current_chain not in chain_proximity:
         chain_proximity[current_chain] = {}  # aa position -> distance to ligand (within PROXIMITY_CUTOFF angstroms)
