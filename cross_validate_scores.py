@@ -1155,7 +1155,7 @@ def format_outfile_header(num_folds, sequence_identity_cutoff, distance, curve_t
     return header
 
   elif curve_type in ['cons']:
-    header = '\n'.join(['# Consistency of residue-to-ligand distances across 10 randomized '+str(num_folds)+'-way ' +
+    header = '\n'.join(['# Consistency of residue-to-ligand distances across 10 randomized '+str(num_folds)+'-way ',
                         '#   splits of domain instances computed using Pearson\'s Correlation Coefficient(PCC)',
                         '# All domain sequences (aligned by ligand type) are in ' + ALN_PATH + distance + '/',
                         '# All binding propensities are found in ' + SCORE_PATH + distance + '/',
