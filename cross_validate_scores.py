@@ -764,8 +764,8 @@ def consistency_by_splits(domain_name, num_splits=2, sequence_identity_cutoff=1.
         consistency = '--'
       else:
         consistency = []
-        for _ in xrange(10):  # 10 random splits of the shared sequence groups
-          folds = np.array_split(np.random.permutation(range(total_shared_groups)), num_splits)
+        for _ in xrange(10):  # 10 random splits of the "shared sequence" groups
+          folds = np.array_split(np.random.permutation(range(len(domain_instance_folds))), num_splits)
           average_distances = []
           for half in folds:
             half_seq_ids = set()
