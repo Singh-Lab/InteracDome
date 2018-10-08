@@ -1160,8 +1160,10 @@ def format_outfile_header(num_folds, sequence_identity_cutoff, distance, curve_t
                         '# All domain sequences (aligned by ligand type) are in ' + ALN_PATH + distance + '/',
                         '# All binding propensities are found in ' + SCORE_PATH + distance + '/',
                         '\t'.join(starting_values +
-                                  ['individual_consistencies',
-                                   'average_consistency'])]) + '\n'
+                                  ['individual_grouped_consistencies',
+                                   'average_grouped_consistency',
+                                   'individual_ungrouped_consistencies',
+                                   'average_ungrouped_consistency'])]) + '\n'
     return header
 
   if curve_type == 'pr':
