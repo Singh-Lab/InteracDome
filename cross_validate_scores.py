@@ -1038,6 +1038,8 @@ def bootstrapped_stderr(domain_name, sequence_identity_cutoff, distance, default
     distance_vectors = domain_distance_vectors(score_file, alignment_file, ligand_type, default_value)
     all_sequences = {seq_id: sequence for seq_id, sequence in all_sequences.items() if seq_id in distance_vectors}
     total_structures = len(set([seq_id[:4] for seq_id in all_sequences.keys()]))  # unique PDB IDs (without chains)
+    distance_vectors = {seq_id: distance_vect for seq_id, distance_vect in distance_vectors.items()
+                        if seq_id in all_sequences}
 
     # it's possible that we can't actually bootstrap these values
     if len(distance_vectors.keys()) < 1 or len(all_sequences.keys()) < 1:
