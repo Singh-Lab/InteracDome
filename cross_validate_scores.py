@@ -1296,12 +1296,12 @@ if __name__ == "__main__":
 
     # distance-to-ligand consistencies across 50-50 splits of domain-ligand instances
     if args.calculate_consistency:
-      accuracy_by_ligand['con'] = consistency_by_splits(current_domain_name,
+      accuracy_by_ligand['cons'] = consistency_by_splits(current_domain_name,
                                                         2,  # number of folds = two
                                                         0.9,  # sequence identity = 90%
                                                         args.distance,
                                                         default_distance_value)
-      outfiles['con'] = CV_PATH + args.distance + '/consistency/' + current_domain_name + '-con-' + \
+      outfiles['cons'] = CV_PATH + args.distance + '/consistency/' + current_domain_name + '-cons-' + \
                         args.distance+'.txt.gz'
 
     # bootstrapped standard errors
