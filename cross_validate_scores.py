@@ -725,7 +725,12 @@ def consistency_by_splits(domain_name, num_splits=2, sequence_identity_cutoff=1.
     # create a per-sequence "distance-to-ligand" vector, i.e. sequence ID -> (values per position)
     distance_vectors = domain_distance_vectors(score_file, alignment_file, ligand_type, default_value)
     all_sequences = {seq_id: sequence for seq_id, sequence in all_sequences.items() if seq_id in distance_vectors}
+    distance_vectors = {seq_id: distance_vect for seq_id, distance_vect in distance_vectors.items()
+                        if seq_id in all_sequences}
     total_structures = len(set([seq_id[:4] for seq_id in all_sequences.keys()]))  # unique PDB IDs (without chains)
+
+    if len(all_sequences.keys()) < 1 or len(distance_vectors.keys()) < 1:
+      continue
 
     # keep track of the fraction of positive (i.e. binding) positions to measure the "easiness" of the task
     average_fraction_positives = []
