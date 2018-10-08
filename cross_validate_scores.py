@@ -1001,7 +1001,7 @@ def accuracy_by_cross_validation(domain_name, num_folds=10, sequence_identity_cu
 
 ########################################################################################################
 
-def bootstrapped_stderr(domain_name, sequence_identity_cutoff, distance, default_value):
+def bootstrapped_stderr(domain_name, sequence_identity_cutoff=0.9, distance='mindist', default_value=20.):
   """
   :param domain_name: full name of the domain being processed (e.g., PF00096_zf-C2H2)
   :param sequence_identity_cutoff: maximum allowed sequence identity between two domains for them to be considered
@@ -1076,43 +1076,68 @@ def bootstrapped_stderr(domain_name, sequence_identity_cutoff, distance, default
                                      str(total_shared_groups),
                                      str(total_structures)])]
 
-    all_seq_ids = sorted(distance_vectors.keys())
-    bootstrapped_values = []
-    for _ in xrange(1001):  # 1000 bootstraps
-      if len(bootstrapped_values) < 1:  # store the actual binding propensities first
-        current_seq_ids = all_seq_ids
+    # ---------------------------------------------------------------------------------------------------------
+    # Step 1: get real binding propensities:
+
+    # get the "uniqueness" for each domain sequence in the bootstrapped set
+    sorted_seq_ids, relative_uniqueness = henikoff_alignment_score(all_sequences)
+
+    # for each match state, get the "training" binding propensity
+    current_scores = []
+    for match_state in xrange(total_match_states):
+      current_distribution = [(distance_vectors[sequence_id][match_state],
+                               relative_uniqueness[seq_index]) for seq_index, sequence_id in
+                              enumerate(sorted_seq_ids) if sequence_id in distance_vectors]
+      flattened_score = summary_value_function(current_distribution)
+      current_scores.append(flattened_score)
+
+    real_binding_scores = ','.join(map(str, current_scores))
+    final_results_lines.append(real_binding_scores)
+
+    # ---------------------------------------------------------------------------------------------------------
+    # Step 2: compute grouped and ungrouped standard errors and 95% confidence intervals
+    for domain_instance_folds in [shared_sequence_folds, all_sequence_folds]:
+      if len(domain_instance_folds) < 1:
+        std_errs = '--'
+        confidence_intervals = '--'
       else:
-        current_seq_ids = [all_seq_ids[i] for i in np.random.choice(len(all_seq_ids), len(all_seq_ids), replace=True)]
+        bootstrapped_values = []
+        for _ in xrange(1000):  # 1000 bootstraps
+          current_grp_ids = np.random.choice(len(domain_instance_folds), len(domain_instance_folds), replace=True)
+          current_seqs = []
+          for grp_id in current_grp_ids:
+            current_seqs += [(sequence_id, all_sequences[sequence_id]) for sequence_id in domain_instance_folds[grp_id]]
 
-      # get the "uniqueness" for each domain sequence in the bootstrapped set
-      sorted_seq_ids, relative_uniqueness = henikoff_alignment_score({sequence_id: all_sequences[sequence_id]
-                                                                      for sequence_id in current_seq_ids})
+          # get the "uniqueness" for each domain sequence in the bootstrapped set
+          (sorted_seq_ids,
+           relative_uniqueness) = henikoff_alignment_score({'seq'+str(i)+'_'+current_seqs[i][0]: current_seqs[i][1]
+                                                            for i in xrange(len(current_seqs))})
 
-      # for each match state, get the "training" binding propensity
-      current_scores = []
-      for match_state in xrange(total_match_states):
-        current_distribution = [(distance_vectors[sequence_id][match_state],
-                                 relative_uniqueness[seq_index]) for seq_index, sequence_id in
-                                enumerate(sorted_seq_ids) if sequence_id in distance_vectors]
-        flattened_score = summary_value_function(current_distribution)
-        current_scores.append(flattened_score)
-      bootstrapped_values.append(current_scores)
+          # for each match state, get the "training" binding propensity
+          current_scores = []
+          for match_state in xrange(total_match_states):
+            current_distribution = [(distance_vectors[sequence_id[sequence_id.find('_')+1:]][match_state],
+                                     relative_uniqueness[seq_index]) for seq_index, sequence_id in
+                                    enumerate(sorted_seq_ids)
+                                    if sequence_id[sequence_id.find('_')+1:] in distance_vectors]
+            flattened_score = summary_value_function(current_distribution)
+            current_scores.append(flattened_score)
+          bootstrapped_values.append(current_scores)
 
-    # now, calculate the real binding propensities:
-    real_binding_scores = ','.join(map(str, bootstrapped_values[0]))
+        # the standard errors and 95% confidence interval sizes:
+        std_errs, confidence_intervals = [], []
+        for i in xrange(total_match_states):
+          current_distribution = [bootstrapped_values[j][i] for j in range(1000)]
+          std_errs.append(np.std(current_distribution))
+          current_distribution.sort()
+          confidence_intervals.append(current_distribution[974]-current_distribution[25])
+        std_errs = ','.join(map(str, std_errs))
+        confidence_intervals = ','.join(map(str, confidence_intervals))
 
-    # the standard errors and 95% confidence interval sizes:
-    std_errs, confidence_intervals = [], []
-    for i in xrange(total_match_states):
-      current_distribution = [bootstrapped_values[j][i] for j in range(1, 1001)]
-      std_errs.append(np.std(current_distribution))
-      current_distribution.sort()
-      confidence_intervals.append(current_distribution[974]-current_distribution[25])
-    std_errs = ','.join(map(str, std_errs))
-    confidence_intervals = ','.join(map(str, confidence_intervals))
+      final_results_lines += [std_errs, confidence_intervals]
 
-    # Write out results to file:
-    final_results_lines.extend([real_binding_scores, std_errs, confidence_intervals])
+    # ---------------------------------------------------------------------------------------------------------
+    # Step 3: write to file
     standard_errors.append('\t'.join(final_results_lines)+'\n')
   total_processed_ligands += 1
 
@@ -1150,8 +1175,10 @@ def format_outfile_header(num_folds, sequence_identity_cutoff, distance, curve_t
                         '# All binding propensities are found in ' + SCORE_PATH + distance + '/',
                         '\t'.join(starting_values +
                                   ['binding_propensities',
-                                   'standard_errors',
-                                   '95%_confidence_intervals'])]) + '\n'
+                                   'grouped_standard_errors',
+                                   'grouped_95%_confidence_intervals',
+                                   'ungrouped_standard_errors',
+                                   'ungrouped_95%_confidence_intervals'])]) + '\n'
     return header
 
   elif curve_type in ['cons']:
@@ -1300,7 +1327,7 @@ if __name__ == "__main__":
     if args.calculate_consistency:
       accuracy_by_ligand['cons'] = consistency_by_splits(current_domain_name,
                                                         2,  # number of folds = two
-                                                        0.9,  # sequence identity = 90%
+                                                        args.seq_identity,  # sequence identity = 90%
                                                         args.distance,
                                                         default_distance_value)
       outfiles['cons'] = CV_PATH + args.distance + '/consistency/' + current_domain_name + '-cons-' + \
@@ -1309,7 +1336,7 @@ if __name__ == "__main__":
     # bootstrapped standard errors
     elif args.calculate_stderr:
       accuracy_by_ligand['stderr'] = bootstrapped_stderr(current_domain_name,
-                                                         1.0,  # sequence identity = 100%
+                                                         args.seq_identity,  # sequence identity = 100%
                                                          args.distance,
                                                          default_distance_value)
       outfiles['stderr'] = CV_PATH + args.distance + '/standard_error/' + current_domain_name + '-stderr-' + \
