@@ -211,7 +211,9 @@ def domain_distance_vectors(score_file, alignment_file, ligand_type, default_val
     for match_state in ordered_match_states:
       current_values.append(float(distances_to_ligand.get(match_state, {}).get(sequence_id, default_value)))
 
-    distance_vectors[sequence_id] = tuple(current_values)  # store the tuple of values for this domain instance
+    # store the tuple of values for this domain instance IFF there is at least one position within PROXIMITY_CUTOFF
+    if True in [dist <= PROXIMITY_CUTOFF for dist in current_values]:
+      distance_vectors[sequence_id] = tuple(current_values)
 
   return distance_vectors
 
@@ -1028,12 +1030,18 @@ def bootstrapped_stderr(domain_name, sequence_identity_cutoff, distance, default
 
     # full sequences for each domain instance (in contact with the current ligand type)
     alignment_file = ALN_PATH + distance + '/' + domain_name + '_' + ligand_type + '_' + distance + '.aln.fa'
+
+    # NOTE: many of these sequences may be "cancelled out" if they do not contain a position within 3.6A of a ligand
     all_sequences = process_domain_alignment(alignment_file)  # sequence ID -> fully aligned sequence
-    total_structures = len(set([seq_id[:4] for seq_id in all_sequences.keys()]))  # unique PDB IDs (without chains)
 
     # create a per-sequence "distance-to-ligand" vector, i.e. sequence ID -> (values per position)
     distance_vectors = domain_distance_vectors(score_file, alignment_file, ligand_type, default_value)
     all_sequences = {seq_id: sequence for seq_id, sequence in all_sequences.items() if seq_id in distance_vectors}
+    total_structures = len(set([seq_id[:4] for seq_id in all_sequences.keys()]))  # unique PDB IDs (without chains)
+
+    # it's possible that we can't actually bootstrap these values
+    if len(distance_vectors.keys()) < 1:
+      continue
 
     # keep track of the fraction of positive (i.e. binding) positions to measure the "easiness" of the task
     average_fraction_positives = []
@@ -1071,7 +1079,8 @@ def bootstrapped_stderr(domain_name, sequence_identity_cutoff, distance, default
 
       # get the "uniqueness" for each domain sequence in the bootstrapped set
       sorted_seq_ids, relative_uniqueness = henikoff_alignment_score({sequence_id: all_sequences[sequence_id]
-                                                                      for sequence_id in current_seq_ids})
+                                                                      for sequence_id in current_seq_ids
+                                                                      if sequence_id in all_sequences})
 
       # for each match state, get the "training" binding propensity
       current_scores = []
