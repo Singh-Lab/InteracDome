@@ -1079,8 +1079,7 @@ def bootstrapped_stderr(domain_name, sequence_identity_cutoff, distance, default
 
       # get the "uniqueness" for each domain sequence in the bootstrapped set
       sorted_seq_ids, relative_uniqueness = henikoff_alignment_score({sequence_id: all_sequences[sequence_id]
-                                                                      for sequence_id in current_seq_ids
-                                                                      if sequence_id in all_sequences})
+                                                                      for sequence_id in current_seq_ids})
 
       # for each match state, get the "training" binding propensity
       current_scores = []
