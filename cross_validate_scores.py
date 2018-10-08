@@ -1040,7 +1040,7 @@ def bootstrapped_stderr(domain_name, sequence_identity_cutoff, distance, default
     total_structures = len(set([seq_id[:4] for seq_id in all_sequences.keys()]))  # unique PDB IDs (without chains)
 
     # it's possible that we can't actually bootstrap these values
-    if len(distance_vectors.keys()) < 1:
+    if len(distance_vectors.keys()) < 1 or len(all_sequences.keys()) < 1:
       continue
 
     # keep track of the fraction of positive (i.e. binding) positions to measure the "easiness" of the task
