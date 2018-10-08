@@ -1296,7 +1296,7 @@ if __name__ == "__main__":
                                                         0.9,  # sequence identity = 90%
                                                         args.distance,
                                                         default_distance_value)
-      outfiles['con'] = CV_PATH + args.distance + '/consistency/' + current_domain_name + '-' + score_type + '-' + \
+      outfiles['con'] = CV_PATH + args.distance + '/consistency/' + current_domain_name + '-con-' + \
                         args.distance+'.txt.gz'
 
     # bootstrapped standard errors
@@ -1305,8 +1305,8 @@ if __name__ == "__main__":
                                                          1.0,  # sequence identity = 100%
                                                          args.distance,
                                                          default_distance_value)
-      outfiles['stderr'] = CV_PATH + args.distance + '/standard_error/' + current_domain_name + '-' + score_type + \
-                           '-' + args.distance + '.txt.gz'
+      outfiles['stderr'] = CV_PATH + args.distance + '/standard_error/' + current_domain_name + '-stderr-' + \
+                           args.distance + '.txt.gz'
 
     # precision-recall, receiver-operator characteristic, precision-threshold (default)
     else:
