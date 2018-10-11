@@ -1428,6 +1428,8 @@ if __name__ == "__main__":
     required_subdirs.append('cross_validation/'+args.distance+'/consistency')
   elif args.calculate_stderr:
     required_subdirs.append('cross_validation/'+args.distance+'/standard_error')
+  elif args.calculate_famdiv:
+    required_subdirs.append('cross_validation/'+args.distance+'/family_diversity')
   else:
     required_subdirs.extend(['cross_validation/'+args.distance+'/precision_recall',
                              'cross_validation/'+args.distance+'/receiver_operator',
