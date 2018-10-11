@@ -1393,6 +1393,8 @@ if __name__ == "__main__":
                       help='Calculate distance-to-ligand consistencies across 50-50 splits of domain-ligand instances')
   parser.add_argument('--stderr', dest='calculate_stderr', action='store_true', default=False,
                       help='Calculate bootstrapped standard errors of all binding propensities')
+  parser.add_argument('--family_diversity', dest='calculate_famdiv', action='store_true', default=False,
+                      help='Calculate the average sequence identity of instances for domain-ligand pairs')
   parser.add_argument('--start', type=int,
                       help='Starting index of sorted list of HMMs to cross validate scores for',
                       default=0,
@@ -1462,7 +1464,7 @@ if __name__ == "__main__":
                            args.distance + '.txt.gz'
 
     # all-against-all pairwise sequence identity comparisons
-    elif args.family_diversity:
+    elif args.calculate_famdiv:
       accuracy_by_ligand['famdiv'] = family_diversity(current_domain_name,
                                                       args.distance)
       outfiles['famdiv'] = CV_PATH + args.distance + '/family_diversity/' + current_domain_name + '-famdiv-' + \
