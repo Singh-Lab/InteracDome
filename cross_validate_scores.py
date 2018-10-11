@@ -1145,6 +1145,115 @@ def bootstrapped_stderr(domain_name, sequence_identity_cutoff=0.9, distance='min
 
 
 ########################################################################################################
+
+def sequence_identity(s1, s2):
+  """
+  :param s1: list of characters
+  :param s2: list of characters
+  :return: hamming distance between the two lists
+  """
+  # Return the % sequence identity between equal-length sequences
+  if len(s1) != len(s2):
+    raise ValueError("Undefined for sequences of unequal length")
+
+  return 100*sum(ch1 == ch2 for ch1, ch2 in zip(s1, s2))/float(len(s1))
+
+
+########################################################################################################
+
+def family_diversity(domain_name, sequence_identity_cutoff=0.9, distance='mindist', default_value=20.):
+  """
+  :param domain_name: full name of the domain being processed (e.g., PF00096_zf-C2H2)
+  :param sequence_identity_cutoff: maximum allowed sequence identity between two domains for them to be considered
+                                   in separate folds
+  :param distance: metric used to assess distance for binding potential scores
+  :param default_value: "default" value stored in case of no information, depends on the distance
+                        metric being used
+  :return: list of output lines for average sequence diversity of instances in family
+  """
+
+  family_diversity = []  # list of lines to write to file
+
+  score_file = SCORE_PATH+distance+'/'+domain_name+'_binding-scores_'+distance+'.txt.gz'
+
+  # get the set of ligands that this domain binds to (e.g., DNABASE_, ATP, METABOLITE_):
+  ligand_types = domain_ligand_types(score_file)
+  total_processed_ligands = 0
+  progress_bars = [(str(rank * 10) + '%', int(rank * (len(ligand_types) / 10.))) for rank in range(1, 10)][::-1]
+
+  for ligand_type in sorted(list(ligand_types)):
+
+    for progress_percent, progress_value in progress_bars:
+      if total_processed_ligands > progress_value:
+        progress_bars = progress_bars[:-1]  # remove the last value to not reprint
+        sys.stderr.write('Processed ' + progress_percent + ' (' + "{:,}".format(total_processed_ligands) + '/' +
+                         "{:,}".format(len(ligand_types)) + ') of ligands for '+domain_name+'.\n')
+        break
+
+    # full sequences for each domain instance (in contact with the current ligand type)
+    alignment_file = ALN_PATH + distance + '/' + domain_name + '_' + ligand_type + '_' + distance + '.aln.fa'
+
+    # NOTE: many of these sequences may be "cancelled out" if they do not contain a position within 3.6A of a ligand
+    all_sequences = process_domain_alignment(alignment_file)  # sequence ID -> fully aligned sequence
+
+    # create a per-sequence "distance-to-ligand" vector, i.e. sequence ID -> (values per position)
+    distance_vectors = domain_distance_vectors(score_file, alignment_file, ligand_type, default_value)
+    all_sequences = {seq_id: sequence for seq_id, sequence in all_sequences.items() if seq_id in distance_vectors}
+    total_structures = len(set([seq_id[:4] for seq_id in all_sequences.keys()]))  # unique PDB IDs (without chains)
+    distance_vectors = {seq_id: distance_vect for seq_id, distance_vect in distance_vectors.items()
+                        if seq_id in all_sequences}
+
+    # it's possible that we don't have enough structural instances here...
+    if len(distance_vectors.keys()) < 1 or len(all_sequences.keys()) < 1:
+      continue
+
+    # keep track of the fraction of positive (i.e. binding) positions to measure the "easiness" of the task
+    average_fraction_positives = []
+    for current_distance_vector in distance_vectors.values():
+      binding_values = [True if (distance in ['mindist', 'meandist'] and current_distance <= PROXIMITY_CUTOFF) or
+                                (distance not in ['mindist', 'meandist'] and current_distance > 0) else False
+                        for current_distance in current_distance_vector]
+      if True in binding_values and False in binding_values:
+        average_fraction_positives.append(binding_values.count(True) / float(len(binding_values)))
+
+    total_match_states = len(distance_vectors.values()[0])  # we don't need the actual match state names
+
+    # group the domain instances into "shared sequence" groups with > specified sequence identity,
+    # then return folds containing sequence IDs (ordered list of non-empty sets)
+    (shared_sequence_folds,
+     total_shared_groups,
+     total_unique_sequences,
+     all_sequence_folds) = create_folds_from_sequences(all_sequences, len(all_sequences), sequence_identity_cutoff)
+
+    # update information for different types of curves that we are keeping track of:
+    final_results_lines = [domain_name, ligand_type, str(total_match_states),
+                           str(arithmetic_mean(average_fraction_positives)),
+                           '|'.join([str(len(all_sequences.keys())),
+                                     str(total_unique_sequences),
+                                     str(total_shared_groups),
+                                     str(total_structures)])]
+
+    # ---------------------------------------------------------------------------------------------------------
+    # compute all-against-all pairwise comparisons for sequences in all_sequences...
+    if len(all_sequences.keys()) < 2:
+      final_results_lines.append('--')
+    else:
+      identities = []
+      for seq1 in sorted(list(all_sequences.keys())[:-1]):
+        for seq2 in sorted(list(all_sequences.keys())[1:]):
+          identities.append(sequence_identity(list(all_sequences[seq1]), list(all_sequences[seq2])))
+      final_results_lines.append(str(np.mean(identities)))
+
+    # ---------------------------------------------------------------------------------------------------------
+    # write to file
+    family_diversity.append('\t'.join(final_results_lines)+'\n')
+  total_processed_ligands += 1
+
+  return family_diversity
+
+
+
+########################################################################################################
 # OUTPUT
 ########################################################################################################
 
@@ -1191,6 +1300,16 @@ def format_outfile_header(num_folds, sequence_identity_cutoff, distance, curve_t
                                    'average_grouped_consistency',
                                    'individual_ungrouped_consistencies',
                                    'average_ungrouped_consistency'])]) + '\n'
+    return header
+
+  elif curve_type in ['famdiv']:
+    header = '\n'.join(['# Sequential diversity of the structural instances for each domain-ligand pair',
+                        '#   measured as the average all-against-all pairwise sequence identities',
+                        '# All domain sequences (aligned by ligand type) are in ' + ALN_PATH + distance + '/',
+                        '# All binding propensities are found in ' + SCORE_PATH + distance + '/',
+                        '\t'.join(starting_values +
+                                  ['average_diversity_all_instances',
+                                   'average_diversity_proximal_instances'])]) + '\n'
     return header
 
   if curve_type == 'pr':
@@ -1340,6 +1459,13 @@ if __name__ == "__main__":
                                                          args.distance,
                                                          default_distance_value)
       outfiles['stderr'] = CV_PATH + args.distance + '/standard_error/' + current_domain_name + '-stderr-' + \
+                           args.distance + '.txt.gz'
+
+    # all-against-all pairwise sequence identity comparisons
+    elif args.family_diversity:
+      accuracy_by_ligand['famdiv'] = family_diversity(current_domain_name,
+                                                      args.distance)
+      outfiles['famdiv'] = CV_PATH + args.distance + '/family_diversity/' + current_domain_name + '-famdiv-' + \
                            args.distance + '.txt.gz'
 
     # precision-recall, receiver-operator characteristic, precision-threshold (default)
