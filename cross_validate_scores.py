@@ -20,7 +20,7 @@ import numpy as np
 import scipy.stats as ss
 from subprocess import call
 from networkx import Graph, connected_components
-from evaluate_uniqueness import henikoff_alignment_score
+from evaluate_uniqueness import clear_crystal_duplicates, henikoff_alignment_score
 from generate_domain_scores import PROXIMITY_CUTOFF, choose_summary_function
 
 
@@ -720,7 +720,8 @@ def consistency_by_splits(domain_name, num_splits=2, sequence_identity_cutoff=1.
 
     # full sequences for each domain instance (in contact with the current ligand type)
     alignment_file = ALN_PATH + distance + '/' + domain_name + '_' + ligand_type + '_' + distance + '.aln.fa'
-    all_sequences = process_domain_alignment(alignment_file)  # sequence ID -> fully aligned sequence
+    all_sequences, _ = clear_crystal_duplicates(alignment_file, ligand_type, distance)  # ID -> fully aligned sequence
+    # all_sequences = process_domain_alignment(alignment_file)  # sequence ID -> fully aligned sequence
 
     # create a per-sequence "distance-to-ligand" vector, i.e. sequence ID -> (values per position)
     distance_vectors = domain_distance_vectors(score_file, alignment_file, ligand_type, default_value)
@@ -828,7 +829,8 @@ def accuracy_by_cross_validation(domain_name, num_folds=10, sequence_identity_cu
 
     # full sequences for each domain instance (in contact with the current ligand type)
     alignment_file = ALN_PATH + distance + '/' + domain_name + '_' + ligand_type + '_' + distance + '.aln.fa'
-    all_sequences = process_domain_alignment(alignment_file)  # sequence ID -> fully aligned sequence
+    all_sequences, _ = clear_crystal_duplicates(alignment_file, ligand_type, distance)  # ID -> fully aligned sequence
+    # all_sequences = process_domain_alignment(alignment_file)  # sequence ID -> fully aligned sequence
     total_structures = len(set([seq_id[:4] for seq_id in all_sequences.keys()]))  # unique PDB IDs (without chains)
 
     # create a per-sequence "distance-to-ligand" vector, i.e. sequence ID -> (values per position)
@@ -1037,7 +1039,8 @@ def bootstrapped_stderr(domain_name, sequence_identity_cutoff=0.9, distance='min
     alignment_file = ALN_PATH + distance + '/' + domain_name + '_' + ligand_type + '_' + distance + '.aln.fa'
 
     # NOTE: many of these sequences may be "cancelled out" if they do not contain a position within 3.6A of a ligand
-    all_sequences = process_domain_alignment(alignment_file)  # sequence ID -> fully aligned sequence
+    all_sequences, _ = clear_crystal_duplicates(alignment_file, ligand_type, distance)  # ID -> fully aligned sequence
+    # all_sequences = process_domain_alignment(alignment_file)  # sequence ID -> fully aligned sequence
 
     # create a per-sequence "distance-to-ligand" vector, i.e. sequence ID -> (values per position)
     distance_vectors = domain_distance_vectors(score_file, alignment_file, ligand_type, default_value)
@@ -1194,7 +1197,10 @@ def family_diversity(domain_name, sequence_identity_cutoff=0.9, distance='mindis
     alignment_file = ALN_PATH + distance + '/' + domain_name + '_' + ligand_type + '_' + distance + '.aln.fa'
 
     # NOTE: many of these sequences may be "cancelled out" if they do not contain a position within 3.6A of a ligand
-    all_sequences = process_domain_alignment(alignment_file)  # sequence ID -> fully aligned sequence
+    all_sequences, _ = clear_crystal_duplicates(alignment_file, ligand_type, distance)  # ID -> fully aligned sequence
+    # all_sequences = process_domain_alignment(alignment_file)  # sequence ID -> fully aligned sequence
+
+    # FIRST, get the sequence identity across all of these
 
     # create a per-sequence "distance-to-ligand" vector, i.e. sequence ID -> (values per position)
     distance_vectors = domain_distance_vectors(score_file, alignment_file, ligand_type, default_value)
@@ -1250,7 +1256,6 @@ def family_diversity(domain_name, sequence_identity_cutoff=0.9, distance='mindis
   total_processed_ligands += 1
 
   return family_diversity
-
 
 
 ########################################################################################################
