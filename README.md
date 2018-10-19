@@ -155,7 +155,7 @@ You can create lists of domains and binding frequencies that pass different cuto
 python interacdome_webserver.py --pfam_path <path_to_hmms>
 ```
 
-Possible options and their default values (corresponding to the "confidently-modeled" set of domain-ligand pairs in the InteracDome paper) are listed below:
+Possible options and their default values (corresponding to the "confident" set of domain-ligand pairs in the InteracDome paper) are listed below:
 
 | Argument | Default | Description | 
 | ------------ | -------- | :----------------- |
