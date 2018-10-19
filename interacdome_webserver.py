@@ -274,7 +274,7 @@ def datasource_website_input(outfile, pfam_path, distance='mindist', for_webserv
 
   # NOTE: these domains interacted only via their *insertion* states (never via a match state), listed here
   #   just for record-keeping and to remind you of a reason for potential discrepancies in counts for website
-  skipped_insertion_states = set()
+  acceptable_domain_states, skipped_insertion_states = set(), set()
 
   outhandle = open(outfile, 'w')
   outhandle.write('\t'.join(['pfam_id', 'domain_length', 'ligand_type', 'num_nonidentical_instances', 'num_structures',
@@ -323,14 +323,6 @@ def datasource_website_input(outfile, pfam_path, distance='mindist', for_webserv
                                'PEPTIDE_', 'ION_', 'METABOLITE_', 'SM_']:
           continue
         ligand_type = ligand_type.replace('_', '').lower()
-
-      # some domains only had modeled interactions in their insertion states....
-      if len(skipped_insertion_states) < 1:
-        try:
-          match_state = int(match_state)
-        except ValueError:
-          skipped_insertion_states.add(domain_name)
-          continue
 
       if ligand_type not in scores:
         scores[ligand_type] = {}
@@ -383,7 +375,10 @@ def datasource_website_input(outfile, pfam_path, distance='mindist', for_webserv
     for ligand_type, score_set in scores.items():
       binding_frequencies = [str(score_set.get(str(mstate), 0)) for mstate in xrange(1, int(domain_length) + 1)]
       if set(binding_frequencies) == set(['0']):
+        skipped_insertion_states.add(domain_name)
         continue
+      acceptable_domain_states.add(domain_name)
+
       outhandle.write('\t'.join([domain_name,  # pfam_id
                                  domain_length,  # domain_length
                                  ligand_type,  # ligand_type
@@ -405,7 +400,7 @@ def datasource_website_input(outfile, pfam_path, distance='mindist', for_webserv
   outhandle.close()
   sys.stderr.write('Wrote to ' + outfile + '\n')
 
-  print skipped_insertion_states
+  print [a for a in skipped_insertion_states if a not in acceptable_domain_states]
 
 
 ########################################################################################################
