@@ -274,7 +274,7 @@ def datasource_website_input(outfile, pfam_path, distance='mindist', for_webserv
 
   # NOTE: these domains interacted only via their *insertion* states (never via a match state), listed here
   #   just for record-keeping and to remind you of a reason for potential discrepancies in counts for website
-  skipped_insertion_states = {}
+  skipped_insertion_states = set()
 
   outhandle = open(outfile, 'w')
   outhandle.write('\t'.join(['pfam_id', 'domain_length', 'ligand_type', 'num_nonidentical_instances', 'num_structures',
