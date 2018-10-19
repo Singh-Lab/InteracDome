@@ -1,4 +1,4 @@
-# Compute Site-Based Ligand-Binding Propensities across the InteracDome 
+# Compute Site-Based Ligand-Binding Frequencies across the InteracDome 
 <div align="center"><img src="interaction-domains-pipeline.png" alt="pipeline figure" title="pipeline to generate site-based domain interaction scores" width="50%" /></div><br />
 
 In this project, we use information from protein co-complex structures to determine how individual positions 
@@ -41,7 +41,7 @@ ls downloaded_data/receptor/ -1 | cut -c1-2 | sort -u
 ```
 
 **NOTE: This step produces files that take up *a lot* of space.** You must save these files if you are interested in 
-computing [alternate distance measures](#computing-alternate-binding-propensity-scores). However, they are 
+computing [alternate distance measures](#computing-alternate-binding-frequency-scores). However, they are 
 otherwise only needed for the immediate next step. To save space wherever you are running in parallel, for each prefix, run the following:
 
 ```bash
@@ -97,7 +97,7 @@ wget http://compbio.cs.princeton.edu/interacdome/$BIOLIP_DOMAINS -O processed_da
 *NOTE: If you choose to run this domain-finding step independently, you must format the results to 
 match the tab-delimited formatting in the file provided (to run subsequent steps of the pipeline).*
 
-### 5: Computing per-domain-position ligand-binding propensities
+### 5: Computing per-domain-position ligand-binding frequencies
 
 The "uniqueness" of each domain sequence must be assessed to account for structural redundancies across 
 PDB entries. To do this, we generate multiple sequence alignments for each domain in contact with each type of ligand, 
@@ -111,23 +111,23 @@ python evaluate_uniqueness.py --create_alignments
 python evaluate_uniqueness.py
 ```
 
-* Finally, we use the per-domain sequence uniqueness evaluations generated in the previous step to assign per-domain-position binding propensities, for each ligand type:
+* Finally, we use the per-domain sequence uniqueness evaluations generated in the previous step to assign per-domain-position binding frequencies, for each ligand type:
 
 ```bash
 python generate_domain_scores.py
 ```
 
-### 6: Cross-validating the precision of binding propensities
+### 6: Cross-validating the precision of binding frequencies
 
-Next, we compute the 10-fold cross-validated precision at different binding propensity thresholds for each domain-ligand pair. 
+Next, we compute the 10-fold cross-validated precision at different binding frequency thresholds for each domain-ligand pair. 
 
-* To get the cross-validated precision achieved at each binding propensity, run:
+* To get the cross-validated precision achieved at each binding frequency, run:
 
 ```bash
 python cross_validate_scores.py --start X --end X
 ```
 
-*NOTE: This step may take a long time.* You have the option of specifying a subset of domains to run on. The minimum allowed start index is 0, and the maximum end value is the total number of domains for which there are binding propensities. 
+*NOTE: This step may take a long time.* You have the option of specifying a subset of domains to run on. The minimum allowed start index is 0, and the maximum end value is the total number of domains for which there are binding frequencies. 
 
 * To find the total number of domains to iterate over, run:
 
@@ -147,9 +147,9 @@ python interacdome_webserver.py --pfam_path <path_to_hmms> --webserver
 
 *NOTE: The following scripts run optional steps.*
 
-### Generating lists of domain-ligand pairs and propensities that pass certain thresholds
+### Generating lists of domain-ligand pairs and binding frequencies that pass certain thresholds
 
-You can create lists of domains and binding propensities that pass different cutoffs by running the following:
+You can create lists of domains and binding frequencies that pass different cutoffs by running the following:
 
 ```bash
 python interacdome_webserver.py --pfam_path <path_to_hmms>
@@ -161,7 +161,7 @@ Possible options and their default values (corresponding to the "confidently-mod
 | ------------ | -------- | :----------------- |
 | &#8209;&#8209;precision | 0.5 | minimum cross-validated precision (where all instances were split into 10 folds) to consider a particular domain-ligand pair |
 | &#8209;&#8209;grouped_precision | 0. | minimum cross-validated precision (where *groups* of instances with &ge;90% sequence identity were split into 10 folds) to consider a particular domain-ligand pair |
-| &#8209;&#8209;threshold_precision | 0.5 | minimum (ungrouped) cross-validated precision achieved for a binding propensity to be used to infer ligand-binding sites | 
+| &#8209;&#8209;threshold_precision | 0.5 | minimum (ungrouped) cross-validated precision achieved for a binding frequency to be used to infer ligand-binding sites | 
 | &#8209;&#8209;structures | 3 | minimum number of distinct PDB entries containing a domain-ligand pair instance | 
 | &#8209;&#8209;instances | 0 | minimum number of domain-ligand pair instances | 
 | &#8209;&#8209;unique_instances | 3 | minimum number of domain-ligand pair instances with *nonredundant* sequences | 
@@ -196,7 +196,7 @@ python group_ligand_types.py --create_group_list --tanimoto_cutoff 0.9
 Calculating all-against-all pairwise Tanimoto coefficients can take a while, we suggest running this step in parallel
 on ~100 BioLiP ligands at a time (e.g., --start 1 --end 100, --start 101 --end 200, ...)
 
-### Computing alternate binding propensity scores
+### Computing alternate binding frequency scores
 
 There are multiple ways to assign a continuous ligand-specific binding score to each amino acid residue in a 
 protein receptor chain. These scores are summarized in the table below, where "receptor-ligand atom pair" always
@@ -212,7 +212,7 @@ in the protein receptor chain, paired with a heavy atom from the ligand.
 | *maxvdw* | maximum " &sigma;=vdw radii | the maximum total overlap area (as in *maxstd*) but where the standard deviations of each Gaussian distribution in a receptor-ligand atom pair are set to the van der Waals interaction radii of the respective atoms (rather than a uniform 1.5).
 | *meanvdw* | average " &sigma;=vdw radii | as above, but the **average** total overlap area |
 
-To use the *maxstd*, *meanstd*, *maxvdw*, or *meanvdw* binding propensity calculations, you **must** first compute the overlap area between two partially overlapping Gaussian distances. 
+To use the *maxstd*, *meanstd*, *maxvdw*, or *meanvdw* binding frequency calculations, you **must** first compute the overlap area between two partially overlapping Gaussian distances. 
 
 * Update the previously-computed distance files by running: 
 
@@ -220,7 +220,7 @@ To use the *maxstd*, *meanstd*, *maxvdw*, or *meanvdw* binding propensity calcul
 python calculate_distances.py --update_overlap --prefix XX
 ```
 
-* Then, generate alternate binding propensity scores by running:
+* Then, generate alternate binding frequency scores by running:
 
 ```bash
 python create_fasta.py --distance <abbreviation> --prefix XX
@@ -231,9 +231,9 @@ python generate_domain_scores.py --distance <abbreviation>
 
 ### Measuring standard errors and distance consistencies
 
-In our paper, we also present results showing the bootstrapped standard error of all binding propensities, across domain-ligand pairs, as well as consistencies of domain-to-ligand distances across 50-50 random splits of domain-ligand pair instances. 
+In our paper, we also present results showing the bootstrapped standard error of all binding frequencies, across domain-ligand pairs, as well as consistencies of domain-to-ligand distances across 50-50 random splits of domain-ligand pair instances. 
 
-* To generate bootstrapped standard errors of binding propensities, run:
+* To generate bootstrapped standard errors of binding frequencies, run:
 
 ```bash
 python cross_validate_scores.py --stderr --distance <abbreviation> --start X --end X
