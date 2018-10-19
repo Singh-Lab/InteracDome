@@ -548,7 +548,6 @@ if __name__ == "__main__":
                        'python interacdome_webserver.py --pfam_path <full_path_to_directory>\n')
       sys.exit(1)
 
-
     for subdir in ['interacdome-webserver', 'interacdome-webserver/pfms']:
       if not os.path.isdir(DATAPATH + subdir):
         call(['mkdir', DATAPATH + subdir])
