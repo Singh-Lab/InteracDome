@@ -173,7 +173,7 @@ def save_consistent_domain_ligand_pairs(required_overall_precision=0.5,
   out_handle = gzip.open(dom_outfile, 'w') if dom_outfile.endswith('gz') else open(dom_outfile, 'w')
   out_handle.write('\n'.join(['# All ' + "{:,}".format(len(passing_domains)) + ' domain-ligand type pairs from ' +
                               "{:,}".format(len(set([a[0] for a in passing_domains]))) +
-                              ' domains with binding propensities found in ',
+                              ' domains with binding frequencies found in ',
                               '# ' + SCORE_PATH + distance + '/',
                               '# with a (ungrouped) precision >= ' + str(required_overall_precision),
                               '# a (grouped) precision >= ' + str(required_grouped_precision),
@@ -220,7 +220,7 @@ def save_consistent_domain_ligand_pairs(required_overall_precision=0.5,
 
   # write out the list of BINDING PROPENSITIES that pass:
   out_handle = gzip.open(wts_outfile, 'w') if wts_outfile.endswith('gz') else open(wts_outfile, 'w')
-  out_handle.write('\n'.join(['# All binding propensities that resulted in a (ungrouped) cross-validated precision >= '+
+  out_handle.write('\n'.join(['# All binding frequencies that resulted in a (ungrouped) cross-validated precision >= '+
                               str(minimum_passing_threshold) + ' are retained from ',
                               '# ' + "{:,}".format(len(passing_domains)) + ' domain-ligand type pairs from ' +
                               "{:,}".format(len(set([a[0] for a in passing_domains]))) + ' domains',
@@ -232,8 +232,8 @@ def save_consistent_domain_ligand_pairs(required_overall_precision=0.5,
                               str(required_structure_count) + '+ distinct structures',
                               '# of the domain in complex with the corresponding ligand in BioLiP',
                               '# Full list of passing domains found in ' + dom_outfile,
-                              '# All (unfiltered) binding propensities found in ' + SCORE_PATH + distance + '/',
-                              '\t'.join(['#domain_name', 'ligand_type', 'match_state', 'binding_propensity'])]) + '\n')
+                              '# All (unfiltered) binding frequencies found in ' + SCORE_PATH + distance + '/',
+                              '\t'.join(['#domain_name', 'ligand_type', 'match_state', 'binding_frequency'])]) + '\n')
 
   binding_files = sorted([SCORE_PATH + distance + '/' + a for a in os.listdir(SCORE_PATH + distance)
                           if a.endswith('_binding-scores_' + distance + '.txt.gz')])
@@ -280,12 +280,12 @@ def datasource_website_input(outfile, pfam_path, distance='mindist', for_webserv
 
   outhandle = open(outfile, 'w')
   outhandle.write('\t'.join(['pfam_id', 'domain_length', 'ligand_type', 'num_nonidentical_instances', 'num_structures',
-                             'binding_propensities',
+                             'binding_frequencies',
                              'max_achieved_precision',
-                             'propensity_at_precision_0.1',
-                             'propensity_at_precision_0.25',
-                             'propensity_at_precision_0.5',
-                             'propensity_at_precision_0.75',
+                             'frequency_at_precision_0.1',
+                             'frequency_at_precision_0.25',
+                             'frequency_at_precision_0.5',
+                             'frequency_at_precision_0.75',
                              'pdb_ids']) + '\n')
 
   binding_propensity_files = sorted([SCORE_PATH + distance + '/' + a for a in os.listdir(SCORE_PATH + distance)
@@ -462,7 +462,7 @@ if __name__ == "__main__":
 
   # --------------------------------------------------------------------------------------------------
   # parse the command-line arguments
-  parser = argparse.ArgumentParser(description='Create lists of filtered binding propensities that can be ' +
+  parser = argparse.ArgumentParser(description='Create lists of filtered binding frequencies that can be ' +
                                                'used to infer ligand-binding residues across new sequences.')
 
   parser.add_argument('--precision', type=float,
@@ -485,7 +485,7 @@ if __name__ == "__main__":
                       help='minimum distinct PDB structures with 1+ domain instances required')
   parser.add_argument('--threshold_precision', type=float,
                       default=0.5,
-                      help='minimum achieved (ungrouped) cross-validated precision for a binding propensity to be ' +
+                      help='minimum achieved (ungrouped) cross-validated precision for a binding frequency to be ' +
                            'used to infer ligand-binding positions')
   parser.add_argument('--distance', type=str,
                       help='How to record the distance between receptor and ligand?',
@@ -523,7 +523,7 @@ if __name__ == "__main__":
                                 '   '+str(args.unique_instances)+'+ nonidentical instances in BioLiP structures',
                                 '   '+str(args.groups)+'+ instances with <90% sequence identity in BioLiP structures',
                                 '   '+str(args.structures)+'+ distinct PDB structures',
-                                '   binding propensities that resulted in an ungrouped precision >= '+
+                                '   binding frequencies that resulted in an ungrouped precision >= '+
                                 str(args.threshold_precision)])+'\n')
 
     save_consistent_domain_ligand_pairs(args.precision,
