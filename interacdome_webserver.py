@@ -274,7 +274,8 @@ def datasource_website_input(outfile, pfam_path, distance='mindist', for_webserv
 
   # NOTE: these domains interacted only via their *insertion* states (never via a match state), listed here
   #   just for record-keeping and to remind you of a reason for potential discrepancies in counts for website
-  acceptable_domain_states, skipped_insertion_states = set(), set()
+  skipped_insertion_states = {'PF00031_Cystatin', 'PF00621_RhoGEF', 'PF04122_CW_binding_2', 'PF08514_STAG',
+                              'PF08530_PepX_C', 'PF09102_Exotox-A_target', 'PF14890_Intein_splicing'}
 
   outhandle = open(outfile, 'w')
   outhandle.write('\t'.join(['pfam_id', 'domain_length', 'ligand_type', 'num_nonidentical_instances', 'num_structures',
@@ -374,10 +375,8 @@ def datasource_website_input(outfile, pfam_path, distance='mindist', for_webserv
     # write results to specified output file
     for ligand_type, score_set in scores.items():
       binding_frequencies = [str(score_set.get(str(mstate), 0)) for mstate in xrange(1, int(domain_length) + 1)]
-      if set(binding_frequencies) == set(['0']):
-        skipped_insertion_states.add(domain_name)
+      if set(binding_frequencies) == {'0'}:
         continue
-      acceptable_domain_states.add(domain_name)
 
       outhandle.write('\t'.join([domain_name,  # pfam_id
                                  domain_length,  # domain_length
