@@ -274,9 +274,7 @@ def datasource_website_input(outfile, pfam_path, distance='mindist', for_webserv
 
   # NOTE: these domains interacted only via their *insertion* states (never via a match state), listed here
   #   just for record-keeping and to remind you of a reason for potential discrepancies in counts for website
-  skipped_insertion_states = {'PF14890_Intein_splicing', 'PF03481_SUA5', 'PF04122_CW_binding_2',
-                              'PF08532_Glyco_hydro_42M', 'PF08530_PepX_C', 'PF02910_Succ_DH_flav_C',
-                              'PF00031_Cystatin', 'PF01823_MACPF', 'PF00621_RhoGEF', 'PF09102_Exotox-A_target'}
+  skipped_insertion_states = {}
 
   outhandle = open(outfile, 'w')
   outhandle.write('\t'.join(['pfam_id', 'domain_length', 'ligand_type', 'num_nonidentical_instances', 'num_structures',
@@ -383,13 +381,15 @@ def datasource_website_input(outfile, pfam_path, distance='mindist', for_webserv
     # --------------------------------------------------------------------------------------------------
     # write results to specified output file
     for ligand_type, score_set in scores.items():
+      binding_frequencies = [str(score_set.get(str(mstate), 0)) for mstate in xrange(1, int(domain_length) + 1)]
+      if set(binding_frequencies) == set(['0']):
+        continue
       outhandle.write('\t'.join([domain_name,  # pfam_id
                                  domain_length,  # domain_length
                                  ligand_type,  # ligand_type
                                  unique_instances.get(ligand_type, '--'),  # num_nonidentical_instances
                                  unique_structures.get(ligand_type, '--'),  # num_structures
-                                 ','.join([str(score_set.get(str(mstate), 0))
-                                           for mstate in xrange(1, int(domain_length) + 1)]),  # binding_propensities
+                                 ','.join(binding_frequencies),  # binding_propensities
                                  str(best_precisions.get(ligand_type, {}).get('max',
                                                                               '--')),  # max_achieved_precision
                                  str(best_precisions.get(ligand_type, {}).get('0.1',
