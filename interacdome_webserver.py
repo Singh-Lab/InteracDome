@@ -405,6 +405,8 @@ def datasource_website_input(outfile, pfam_path, distance='mindist', for_webserv
   outhandle.close()
   sys.stderr.write('Wrote to ' + outfile + '\n')
 
+  print skipped_insertion_states
+
 
 ########################################################################################################
 
