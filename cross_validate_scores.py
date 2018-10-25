@@ -1245,10 +1245,8 @@ def family_diversity(domain_name, sequence_identity_cutoff=0.9, distance='mindis
       final_results_lines.append('--')
     else:
       identities = []
-      for seq1 in sorted(list(all_sequences.keys())):
-        for seq2 in sorted(list(all_sequences.keys())):
-          if seq1 == seq2:
-            continue
+      for i, seq1 in enumerate(sorted(list(all_sequences.keys())))[:-1]:
+        for seq2 in sorted(list(all_sequences.keys()))[i+1:]:
           identities.append(sequence_identity(list(all_sequences[seq1]), list(all_sequences[seq2])))
       final_results_lines.append(str(np.mean(identities)))
 
