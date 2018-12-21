@@ -1,5 +1,5 @@
 # Compute Site-Based Ligand-Binding Frequencies across the InteracDome 
-<div align="center"><img src="interaction-domains-pipeline.png" alt="pipeline figure" title="pipeline to generate site-based domain interaction scores" width="50%" /></div><br />
+<div align="center"><img src="http://compbio.cs.princeton.edu/interacdome/InteracDome_workflow.png" alt="pipeline figure" title="InteracDome workflow" width="50%" /></div><br />
 
 In this project, we use information from protein co-complex structures to determine how individual positions 
 within domains may be involved in binding different ligands. If you use data or scripts from this repository, 
@@ -12,23 +12,23 @@ please cite:
 * To download the *primary set* of BioLiP data, released March 6, 2013, run the following. **Note that this 
 step can take a long time and will require substantial hard drive space (4.1GB).**
 
-```bash
-python download_biolip.py --initialize
-```
+  ```bash
+  python download_biolip.py --initialize
+  ```
 
 * You **must** update the BioLiP data that you just downloaded (as BioLiP releases weekly updates) by running:
 
-```bash
-python download_biolip.py
-```
+  ```bash
+  python download_biolip.py
+  ```
 
 ### 2: Computing distances between atoms
 
 * To calculate pairwise Euclidean distances between receptor residue atoms and ligand atoms, run: 
 
-```bash
-python calculate_distances.py --prefix XX
-```
+  ```bash
+  python calculate_distances.py --prefix XX
+  ```
 
 **NOTE: This step also takes a long time; we suggest running in parallel.**
  The --prefix option allows you to specify 
@@ -36,9 +36,9 @@ a subset of PDB IDs that begin with a specific 2-character prefix (e.g., 2m).
 
 * To get the set of all possible prefixes, run:
 
-```bash
-ls downloaded_data/receptor/ -1 | cut -c1-2 | sort -u
-```
+  ```bash
+  ls downloaded_data/receptor/ -1 | cut -c1-2 | sort -u
+  ```
 
 **NOTE: This step produces files that take up *a lot* of space.** You must save these files if you are interested in 
 computing [alternate distance measures](#computing-alternate-binding-frequency-scores). However, they are 
@@ -57,9 +57,9 @@ We suggest using a simple and intuitive score (i.e., ''mindist'') to measure the
 
 * To calculate the distances between each receptor amino acid residue and all corresponding ligand types, run: 
 
-```bash
-python create_fasta.py --prefix XX
-```
+  ```bash
+  python create_fasta.py --prefix XX
+  ```
 
 *NOTE: Alternate ways of measuring the proximity between a protein receptor chain and ligand (which we found to result in highly correlated values and to take a much longer time to run) are described at the bottom of this page.*
 
@@ -69,9 +69,9 @@ You can use whatever method you prefer to find domains in your protein receptor 
 
 * To create a single nonredundant FASTA file of protein chain sequences to search for domain instances, run:
 
-```bash
-python create_fasta.py --hmmer_input
-```
+  ```bash
+  python create_fasta.py --hmmer_input
+  ```
 
 In our paper, we downloaded all [Pfam-A (version 31)](http://pfam.xfam.org) domains and ran [HMMER](http://hmmer.org) 
 locally to find domain hits. General code to run this step of the pipeline can be found at 
@@ -79,20 +79,20 @@ locally to find domain hits. General code to run this step of the pipeline can b
 
 * To transform the results obtained from this step to be reflective of original protein chain identifiers (rather than nonredundant identifiers), run:
 
-```bash
-python create_fasta.py --inflate_nonredundant
-                       --original_fasta processed_data/annotations/BioLiP_2018-09-12_nonredundant.fa
-                       --nr_results_file processed_data/annotations/BioLiP_2018-09-12-domains-pfam_v31-orig.tsv.gz
-                       --output_file processed_data/domains/BioLiP_2018-09-12-domains-pfam_v31.tsv.gz
-```
+  ```bash
+  python create_fasta.py --inflate_nonredundant
+                         --original_fasta processed_data/annotations/BioLiP_2018-09-12_nonredundant.fa
+                         --nr_results_file processed_data/annotations/BioLiP_2018-09-12-domains-pfam_v31-orig.tsv.gz
+                         --output_file processed_data/domains/BioLiP_2018-09-12-domains-pfam_v31.tsv.gz
+  ```
 
 * The output of these steps, run on BioLiP (version 2018-09-12) can be obtained by running:
  
-```bash
-if [ ! -d processed_data/domains ]; then mkdir processed_data/domains; fi
-BIOLIP_DOMAINS="BioLiP_2018-09-12-domains-pfam_v31.tsv.gz"
-wget http://compbio.cs.princeton.edu/interacdome/$BIOLIP_DOMAINS -O processed_data/domains/$BIOLIP_DOMAINS
-```
+  ```bash
+  if [ ! -d processed_data/domains ]; then mkdir processed_data/domains; fi
+  BIOLIP_DOMAINS="BioLiP_2018-09-12-domains-pfam_v31.tsv.gz"
+  wget http://compbio.cs.princeton.edu/interacdome/$BIOLIP_DOMAINS -O processed_data/domains/$BIOLIP_DOMAINS
+  ```
 
 *NOTE: If you choose to run this domain-finding step independently, you must format the results to 
 match the tab-delimited formatting in the file provided (to run subsequent steps of the pipeline).*
@@ -106,16 +106,16 @@ and then assign per-sequence scores as in
 
 * To get per-domain-instance uniqueness weights, run:
 
-```bash
-python evaluate_uniqueness.py --create_alignments
-python evaluate_uniqueness.py
-```
+  ```bash
+  python evaluate_uniqueness.py --create_alignments
+  python evaluate_uniqueness.py
+  ```
 
 * Finally, we use the per-domain sequence uniqueness evaluations generated in the previous step to assign per-domain-position binding frequencies, for each ligand type:
 
-```bash
-python generate_domain_scores.py
-```
+  ```bash
+  python generate_domain_scores.py
+  ```
 
 ### 6: Cross-validating the precision of binding frequencies
 
@@ -123,17 +123,17 @@ Next, we compute the 10-fold cross-validated precision at different binding freq
 
 * To get the cross-validated precision achieved at each binding frequency, run:
 
-```bash
-python cross_validate_scores.py --start X --end X
-```
+  ```bash
+  python cross_validate_scores.py --start X --end X
+  ```
 
 *NOTE: This step may take a long time.* You have the option of specifying a subset of domains to run on. The minimum allowed start index is 0, and the maximum end value is the total number of domains for which there are binding frequencies. 
 
 * To find the total number of domains to iterate over, run:
 
-```bash
-ls processed_data/domains/binding_scores/mindist | wc -l
-```
+  ```bash
+  ls processed_data/domains/binding_scores/mindist | wc -l
+  ```
 
 ### 7: Recreating InteracDome webserver files
 
@@ -216,18 +216,18 @@ To use the *maxstd*, *meanstd*, *maxvdw*, or *meanvdw* binding frequency calcula
 
 * Update the previously-computed distance files by running: 
 
-```bash
-python calculate_distances.py --update_overlap --prefix XX
-```
+  ```bash
+  python calculate_distances.py --update_overlap --prefix XX
+  ```
 
 * Then, generate alternate binding frequency scores by running:
 
-```bash
-python create_fasta.py --distance <abbreviation> --prefix XX
-python evaluate_uniqueness.py --create_alignments --distance <abbreviation>
-python evaluate_uniqueness.py --distance <abbreviation>
-python generate_domain_scores.py --distance <abbreviation>
-```
+  ```bash
+  python create_fasta.py --distance <abbreviation> --prefix XX
+  python evaluate_uniqueness.py --create_alignments --distance <abbreviation>
+  python evaluate_uniqueness.py --distance <abbreviation>
+  python generate_domain_scores.py --distance <abbreviation>
+  ```
 
 ### Measuring standard errors and distance consistencies
 
@@ -235,12 +235,12 @@ In our paper, we also present results showing the bootstrapped standard error of
 
 * To generate bootstrapped standard errors of binding frequencies, run:
 
-```bash
-python cross_validate_scores.py --stderr --distance <abbreviation> --start X --end X
-```
+  ```bash
+  python cross_validate_scores.py --stderr --distance <abbreviation> --start X --end X
+  ```
 
 * To generate distance consistencies for each domain-ligand pair, run:
 
-```bash
-python cross_validate_scores.py --consistency --distance <abbreviation> --start X --end X
-```
+  ```bash
+  python cross_validate_scores.py --consistency --distance <abbreviation> --start X --end X
+  ```
