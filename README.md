@@ -5,7 +5,7 @@ In this project, we use information from protein co-complex structures to determ
 within domains may be involved in binding different ligands. If you use data or scripts from this repository, 
 please cite:
 
-> Kobren, S.N. and Singh, M. (2018) "Systematic domain-based aggregation of protein structures highlights DNA-, RNA-, and other ligand-binding positions." *Nucleic Acids Res*, in press. doi: [10.1093/nar/gky1224](http://dx.doi.org/10.1093/nar/gky1224). <br> [InteracDome Web Server](https://interacdome.princeton.edu "InteracDome")
+> Kobren, S.N. and Singh, M. (2018) "Systematic domain-based aggregation of protein structures highlights DNA-, RNA-, and other ligand-binding positions." *Nucleic Acids Res*, 47(2): 582–593. doi: [10.1093/nar/gky1224](http://dx.doi.org/10.1093/nar/gky1224). <br> [InteracDome Web Server](https://interacdome.princeton.edu "InteracDome")
 
 ### 1: Downloading preliminary data
 
