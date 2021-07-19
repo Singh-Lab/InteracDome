@@ -183,7 +183,7 @@ To repeat these steps to generate an up-to-date version of the file, the followi
 `babel` from <http://openbabel.org/wiki/Main_Page>. You will also need to manually download a file from DrugBank 
 (instructions will be printed to screen when you attempt to run the following), but all other required input 
 files will be automatically downloaded as needed. You must have at least 8GB of space to download all required 
-files. The `downloaded_data/ligand_groups.txt` file was **last updated on September 26, 2018**.
+files. The `downloaded_data/ligand_groups.txt` file was **last updated on June 11, 2021**.
 
 ```bash
 python group_ligand_types.py --parse_raw --database hmdb
