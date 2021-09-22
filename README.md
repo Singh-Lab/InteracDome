@@ -188,8 +188,8 @@ files. The `downloaded_data/ligand_groups.txt` file was **last updated on June 1
 ```bash
 python group_ligand_types.py --parse_raw --database hmdb
 python group_ligand_types.py --parse_raw --database drugbank
-python group_ligand_types.py --tanimoto --database hmdb --start 1 --end 27375
-python group_ligand_types.py --tanimoto --database drugbank --start 1 --end 27375
+python group_ligand_types.py --tanimoto --database hmdb --start 1 --end 31256
+python group_ligand_types.py --tanimoto --database drugbank --start 1 --end 31256
 python group_ligand_types.py --create_group_list --tanimoto_cutoff 0.9
 ```
 
